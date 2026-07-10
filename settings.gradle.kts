@@ -26,3 +26,5 @@ rootProject.name = "Leaderboard"
 
 include(":leaderboard:domain")
 include(":leaderboard:data")
+include(":leaderboard:presentation")
+include(":leaderboard:ui")

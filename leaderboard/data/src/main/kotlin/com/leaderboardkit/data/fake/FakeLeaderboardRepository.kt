@@ -7,7 +7,7 @@ import com.leaderboardkit.domain.model.SortDirection
 import com.leaderboardkit.domain.repository.LeaderboardRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -23,14 +23,21 @@ import kotlinx.coroutines.sync.withLock
 class FakeLeaderboardRepository(initialEntries: List<LeaderboardEntry> = emptyList()) : LeaderboardRepository {
 
     private val allEntries = MutableStateFlow(initialEntries)
-    private var loadedCount: Int? = null
+
+    /**
+     * A [MutableStateFlow], not a plain `var`: [observeEntries] needs to keep
+     * emitting to collectors that were already subscribed before [loadMore] grew
+     * the window, and a collector only ever re-runs when a *flow* it collects
+     * emits — mutating a plain field wouldn't be visible to them.
+     */
+    private val loadedCount = MutableStateFlow<Int?>(null)
     private val rankOverrides = mutableMapOf<String, Int>()
     private val mutex = Mutex()
 
     /** Replaces the full backing dataset and resets pagination back to one page. */
     fun setEntries(entries: List<LeaderboardEntry>) {
         allEntries.value = entries
-        loadedCount = null
+        loadedCount.value = null
     }
 
     /**
@@ -53,17 +60,18 @@ class FakeLeaderboardRepository(initialEntries: List<LeaderboardEntry> = emptyLi
         }
     }
 
-    override fun observeEntries(config: LeaderboardConfig): Flow<List<LeaderboardEntry>> =
-        allEntries.map { current ->
-            val window = loadedCount ?: config.pageSize.also { loadedCount = it }
-            rankedEntries(config, current).take(window.coerceAtMost(current.size))
+    override fun observeEntries(config: LeaderboardConfig): Flow<List<LeaderboardEntry>> {
+        if (loadedCount.value == null) loadedCount.value = config.pageSize
+        return combine(allEntries, loadedCount) { current, window ->
+            rankedEntries(config, current).take((window ?: config.pageSize).coerceAtMost(current.size))
         }
+    }
 
     override suspend fun loadMore(config: LeaderboardConfig): Result<Boolean> = mutex.withLock {
         val total = allEntries.value.size
-        val current = loadedCount ?: config.pageSize
+        val current = loadedCount.value ?: config.pageSize
         if (current >= total) return@withLock Result.success(false)
-        loadedCount = (current + config.pageSize).coerceAtMost(total)
+        loadedCount.value = (current + config.pageSize).coerceAtMost(total)
         Result.success(true)
     }
 
