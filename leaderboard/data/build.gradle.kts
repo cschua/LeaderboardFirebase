@@ -1,13 +1,15 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
     alias(libs.plugins.android.library)
-    alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.kotlin.kapt)
+    alias(libs.plugins.ksp)
     alias(libs.plugins.hilt.android)
+    alias(libs.plugins.kotlinx.kover)
 }
 
 android {
     namespace = "com.leaderboardkit.data"
-    compileSdk = 35
+    compileSdk = 37
 
     defaultConfig {
         minSdk = 24
@@ -19,8 +21,11 @@ android {
         targetCompatibility = JavaVersion.VERSION_21
     }
 
-    kotlinOptions {
-        jvmTarget = "21"
+    kotlin {
+        compilerOptions {
+            jvmTarget.set(JvmTarget.JVM_21)
+            javaParameters.set(true)
+        }
     }
 
     testOptions {
@@ -32,20 +37,38 @@ dependencies {
     api(project(":leaderboard:domain"))
 
     implementation(platform(libs.firebase.bom))
-    implementation(libs.firebase.firestore.ktx)
-    implementation(libs.firebase.database.ktx)
-    implementation(libs.firebase.functions.ktx)
+    implementation(libs.firebase.firestore)
+    implementation(libs.firebase.database)
+    implementation(libs.firebase.functions)
 
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.kotlinx.coroutines.play.services)
     implementation(libs.androidx.core.ktx)
 
     implementation(libs.hilt.android)
-    kapt(libs.hilt.compiler)
+    ksp(libs.hilt.compiler)
 
     testImplementation(libs.junit4)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.turbine)
     testImplementation(libs.mockk)
     testImplementation(libs.truth)
+}
+
+kover {
+    reports {
+        filters {
+            excludes {
+                classes(
+                    "*Module*",
+                    "*Factory*",
+                    "*_HiltModules*",
+                    "*.BuildConfig",
+                    "*.R",
+                    "*.R$*"
+                )
+                annotatedBy("javax.annotation.Generated")
+            }
+        }
+    }
 }

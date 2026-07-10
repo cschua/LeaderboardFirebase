@@ -1,5 +1,6 @@
 plugins {
     alias(libs.plugins.kotlin.jvm)
+    alias(libs.plugins.kotlinx.kover)
 }
 
 // Pure Kotlin, no Android or Firebase dependencies allowed here by design —
@@ -17,4 +18,20 @@ dependencies {
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.turbine)
     testImplementation(libs.truth)
+}
+
+kover {
+    reports {
+        filters {
+            excludes {
+                classes(
+                    "*Module*",
+                    "*Factory*",
+                    "*_HiltModules*",
+                    "*_Provide*",
+                    "*_MembersInjector*"
+                )
+            }
+        }
+    }
 }

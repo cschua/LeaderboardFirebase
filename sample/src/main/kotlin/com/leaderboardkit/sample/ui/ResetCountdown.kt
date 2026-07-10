@@ -10,11 +10,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import kotlinx.coroutines.delay
-import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.toLocalDateTime
+import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.ZERO
 import kotlin.time.Duration.Companion.days
@@ -52,7 +52,7 @@ private fun timeUntilNextWeeklyResetUtc(): Duration {
     val today = now.toLocalDateTime(TimeZone.UTC).date
     val epochDay = today.toEpochDays()
     val daysSinceMonday = (((epochDay + 3) % 7) + 7) % 7
-    val daysUntilNextMonday = if (daysSinceMonday == 0) 7 else 7 - daysSinceMonday
+    val daysUntilNextMonday = if (daysSinceMonday == 0L) 7L else 7L - daysSinceMonday
     val nextMonday = LocalDate.fromEpochDays(epochDay + daysUntilNextMonday)
     val resetInstant = nextMonday.atStartOfDayIn(TimeZone.UTC)
     return (resetInstant - now).coerceAtLeast(ZERO)

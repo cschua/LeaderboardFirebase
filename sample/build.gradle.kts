@@ -1,17 +1,19 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlinx.kover)
+    alias(libs.plugins.google.services)
 }
 
 android {
     namespace = "com.leaderboardkit.sample"
-    compileSdk = 35
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.leaderboardkit.sample"
         minSdk = 24
-        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
     }
@@ -21,8 +23,11 @@ android {
         targetCompatibility = JavaVersion.VERSION_21
     }
 
-    kotlinOptions {
-        jvmTarget = "21"
+    kotlin {
+        compilerOptions {
+            jvmTarget.set(JvmTarget.JVM_21)
+            javaParameters.set(true)
+        }
     }
 
     buildFeatures {
@@ -46,4 +51,23 @@ dependencies {
 
     debugImplementation(platform(libs.compose.bom))
     debugImplementation(libs.compose.ui.tooling)
+}
+
+kover {
+    reports {
+        filters {
+            excludes {
+                classes(
+                    "*Module*",
+                    "*Factory*",
+                    "*_HiltModules*",
+                    "*_Provide*",
+                    "*_MembersInjector*",
+                    "*.BuildConfig",
+                    "*.R",
+                    "*.R$*"
+                )
+            }
+        }
+    }
 }

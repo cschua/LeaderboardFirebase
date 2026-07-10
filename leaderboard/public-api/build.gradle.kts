@@ -1,12 +1,14 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
     alias(libs.plugins.android.library)
-    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlinx.kover)
 }
 
 android {
     namespace = "com.leaderboardkit"
-    compileSdk = 35
+    compileSdk = 37
 
     defaultConfig {
         minSdk = 24
@@ -17,8 +19,11 @@ android {
         targetCompatibility = JavaVersion.VERSION_21
     }
 
-    kotlinOptions {
-        jvmTarget = "21"
+    kotlin {
+        compilerOptions {
+            jvmTarget.set(JvmTarget.JVM_21)
+            javaParameters.set(true)
+        }
     }
 
     buildFeatures {
@@ -52,11 +57,30 @@ dependencies {
     implementation(project(":leaderboard:data"))
 
     implementation(platform(libs.firebase.bom))
-    implementation(libs.firebase.firestore.ktx)
+    implementation(libs.firebase.firestore)
     implementation(libs.kotlinx.coroutines.android)
 
     testImplementation(project(":leaderboard:data"))
     testImplementation(libs.junit4)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.truth)
+}
+
+kover {
+    reports {
+        filters {
+            excludes {
+                classes(
+                    "*Module*",
+                    "*Factory*",
+                    "*_HiltModules*",
+                    "*_Provide*",
+                    "*_MembersInjector*",
+                    "*.BuildConfig",
+                    "*.R",
+                    "*.R$*"
+                )
+            }
+        }
+    }
 }

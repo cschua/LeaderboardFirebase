@@ -1,21 +1,24 @@
 [versions]
 javaxInject = "1"
-kotlin = "2.0.21"
-agp = "8.7.2"
-coroutines = "1.9.0"
-kotlinxDatetime = "0.6.1"
-androidxCore = "1.13.1"
-hilt = "2.52"
-firebaseBom = "33.5.1"
-playServicesTasks = "1.8.3"
+kotlin = "2.4.0"
+agp = "9.2.1"
+coroutines = "1.11.0"
+kotlinxDatetime = "0.8.0"
+androidxCore = "1.19.0"
+hilt = "2.60.1"
+firebaseBom = "34.16.0"
+playServicesTasks = "1.11.0"
 junit4 = "4.13.2"
-turbine = "1.1.0"
-mockk = "1.13.13"
-truth = "1.4.4"
-coroutinesTest = "1.9.0"
-androidxLifecycle = "2.8.7"
-androidxActivity = "1.9.3"
-composeBom = "2024.12.01"
+turbine = "1.2.1"
+mockk = "1.14.11"
+truth = "1.4.5"
+coroutinesTest = "1.11.0"
+androidxLifecycle = "2.11.0"
+androidxActivity = "1.13.0"
+composeBom = "2026.06.01"
+kover = "0.9.8"
+ksp = "2.3.4"
+googleServices = "4.5.0"
 
 [libraries]
 javax-inject = { module = "javax.inject:javax.inject", version.ref = "javaxInject" }
@@ -31,9 +34,9 @@ hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "hilt"
 hilt-compiler = { module = "com.google.dagger:hilt-android-compiler", version.ref = "hilt" }
 
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }
-firebase-firestore-ktx = { module = "com.google.firebase:firebase-firestore-ktx" }
-firebase-database-ktx = { module = "com.google.firebase:firebase-database-ktx" }
-firebase-functions-ktx = { module = "com.google.firebase:firebase-functions-ktx" }
+firebase-firestore = { module = "com.google.firebase:firebase-firestore" }
+firebase-database = { module = "com.google.firebase:firebase-database" }
+firebase-functions = { module = "com.google.firebase:firebase-functions" }
 
 junit4 = { module = "junit:junit", version.ref = "junit4" }
 turbine = { module = "app.cash.turbine:turbine", version.ref = "turbine" }
@@ -61,7 +64,8 @@ compose-animation-core = { module = "androidx.compose.animation:animation-core" 
 android-library = { id = "com.android.library", version.ref = "agp" }
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
-kotlin-kapt = { id = "org.jetbrains.kotlin.kapt", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 hilt-android = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
+kotlinx-kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+google-services = { id = "com.google.gms.google-services", version.ref = "googleServices" }

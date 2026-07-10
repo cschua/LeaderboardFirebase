@@ -1,7 +1,8 @@
 package com.leaderboardkit.data.firestore
 
-import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
+import kotlin.time.Clock
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 
 /**
@@ -16,7 +17,7 @@ import kotlin.time.Duration.Companion.minutes
  * server-sourced read on (re)attach after a long gap instead of trusting whatever
  * the cache hands back first.
  */
-internal class ListenerReconnectPolicy(private val staleAfter: kotlin.time.Duration = 30.minutes) {
+internal class ListenerReconnectPolicy(private val staleAfter: Duration = 30.minutes) {
 
     private val lastActiveAt = mutableMapOf<String, Instant>()
 

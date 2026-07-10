@@ -41,7 +41,7 @@ the documented, supported entry point.
 3. Enable **Firestore** in the console (Realtime Database only if you plan to use the RTDB
    reference adapter directly instead of the facade — see [Advanced usage](#advanced-usage)).
 4. Apply the `com.google.gms.google-services` Gradle plugin to your app module and add the
-   Firebase BOM + `firebase-firestore-ktx` (`:leaderboard:public-api` already pulls in the
+   Firebase BOM + `firebase-firestore` (`:leaderboard:public-api` already pulls in the
    Firestore SDK transitively — you don't need to add it again, just the `google-services` plugin
    and its config file).
 
