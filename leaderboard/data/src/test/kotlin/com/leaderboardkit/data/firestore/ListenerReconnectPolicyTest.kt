@@ -1,0 +1,42 @@
+package com.leaderboardkit.data.firestore
+
+import com.google.common.truth.Truth.assertThat
+import kotlinx.datetime.Instant
+import kotlinx.datetime.plus
+import org.junit.Test
+import kotlin.time.Duration.Companion.minutes
+
+class ListenerReconnectPolicyTest {
+
+    private val policy = ListenerReconnectPolicy(staleAfter = 30.minutes)
+    private val t0 = Instant.parse("2026-07-09T12:00:00Z")
+
+    @Test
+    fun `never-active board does not force a server read`() {
+        assertThat(policy.shouldForceServerRead("board1", now = t0)).isFalse()
+    }
+
+    @Test
+    fun `short gap since last active does not force a server read`() {
+        policy.markActive("board1", now = t0)
+        policy.markInactive("board1", now = t0)
+
+        assertThat(policy.shouldForceServerRead("board1", now = t0.plus(10.minutes))).isFalse()
+    }
+
+    @Test
+    fun `gap past the stale threshold forces a server read`() {
+        policy.markActive("board1", now = t0)
+        policy.markInactive("board1", now = t0)
+
+        assertThat(policy.shouldForceServerRead("board1", now = t0.plus(31.minutes))).isTrue()
+    }
+
+    @Test
+    fun `boards are tracked independently`() {
+        policy.markActive("board1", now = t0)
+        policy.markInactive("board1", now = t0)
+
+        assertThat(policy.shouldForceServerRead("board2", now = t0.plus(31.minutes))).isFalse()
+    }
+}

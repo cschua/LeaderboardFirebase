@@ -2,11 +2,9 @@ package com.leaderboardkit.data.common
 
 import com.leaderboardkit.domain.model.TimeWindow
 import kotlinx.datetime.Clock
-import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
-import kotlinx.datetime.minus
 import kotlinx.datetime.toLocalDateTime
 
 /**
@@ -22,8 +20,13 @@ import kotlinx.datetime.toLocalDateTime
  * again — no delete/reset pass is needed on the hot path (a host app may still want
  * a scheduled job to prune old buckets for storage cost, but that is decoupled
  * from correctness).
+ *
+ * Not part of this module's public surface: host apps customizing path strategy
+ * are expected to delegate to [com.leaderboardkit.data.firestore.DefaultFirestorePathStrategy]/
+ * [com.leaderboardkit.data.realtimedb.DefaultRealtimeDbPathStrategy] (e.g. wrapping
+ * one with a tenant prefix) rather than reimplement bucket computation themselves.
  */
-object TimeWindowBucket {
+internal object TimeWindowBucket {
 
     fun currentBucketId(timeWindow: TimeWindow, now: Instant = Clock.System.now()): String = when (timeWindow) {
         is TimeWindow.AllTime -> "all"
@@ -39,9 +42,17 @@ object TimeWindowBucket {
 
     private fun dateIn(zone: TimeZone, now: Instant): LocalDate = now.toLocalDateTime(zone).date
 
+    /**
+     * Deliberately avoids `LocalDate.dayOfWeek` — on Android that property returns
+     * a `java.time.DayOfWeek`, whose members (`.value` included) require API 26
+     * and aren't available on this library's minSdk 24 without core library
+     * desugaring (which this module doesn't enable). Epoch-day arithmetic is pure
+     * kotlinx-datetime, no `java.time` involved, and works down to API 24.
+     * 1970-01-01 (epoch day 0) was a Thursday, i.e. 3 days after Monday.
+     */
     private fun startOfWeek(zone: TimeZone, now: Instant): LocalDate {
-        val today = dateIn(zone, now)
-        val daysSinceMonday = today.dayOfWeek.value - 1 // java.time.DayOfWeek: MONDAY.value == 1
-        return today.minus(DatePeriod(days = daysSinceMonday))
+        val epochDay = dateIn(zone, now).toEpochDays()
+        val daysSinceMonday = (((epochDay + 3) % 7) + 7) % 7
+        return LocalDate.fromEpochDays(epochDay - daysSinceMonday)
     }
 }
