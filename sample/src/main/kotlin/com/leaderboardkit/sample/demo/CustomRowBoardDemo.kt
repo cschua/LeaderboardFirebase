@@ -28,10 +28,14 @@ import kotlinx.coroutines.launch
  * library's default row rendering rather than layering on top of it. Everything
  * else (pagination, the pinned off-screen current-user row, refresh strategy
  * handling) keeps working unchanged: only the per-row visuals are swapped.
+ *
+ * Reuses [GlobalBoardDemo]'s `"global_alltime"` board — `rowContent` is a
+ * rendering concern independent of `config` (the data source), so there's no
+ * reason this needs its own board/data just to look different.
  */
 @Composable
 fun CustomRowBoardDemo(onBack: () -> Unit) {
-    val config = remember { LeaderboardKit.buildConfig("custom_row_demo") }
+    val config = remember { LeaderboardKit.buildConfig("global_alltime") }
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
 

@@ -36,6 +36,11 @@ private val demos = listOf(
         destination = Destination.WeeklyBoard,
     ),
     DemoEntry(
+        title = "Monthly",
+        subtitle = "TimeWindow.Monthly — defaults to Polling(3min)",
+        destination = Destination.MonthlyBoard,
+    ),
+    DemoEntry(
         title = "Fully custom theme",
         subtitle = "Dark palette, square avatars, medal rank badges, custom typography",
         destination = Destination.CustomTheme,

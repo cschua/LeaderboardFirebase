@@ -29,10 +29,14 @@ private val NeonPurple = Color(0xFF7C4DFF)
  * Material3 [androidx.compose.material3.ColorScheme] (colors), monospace
  * display-name/score text styles (typography), square avatars instead of the
  * default circles, and medal icons instead of numeric rank badges.
+ *
+ * Reuses [GlobalBoardDemo]'s `"global_alltime"` board — `theme` is a rendering
+ * concern independent of `config` (the data source), so there's no reason this
+ * needs its own board/data just to look different.
  */
 @Composable
 fun CustomThemeBoardDemo(onBack: () -> Unit) {
-    val config = remember { LeaderboardKit.buildConfig("custom_theme_demo") }
+    val config = remember { LeaderboardKit.buildConfig("global_alltime") }
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
 
