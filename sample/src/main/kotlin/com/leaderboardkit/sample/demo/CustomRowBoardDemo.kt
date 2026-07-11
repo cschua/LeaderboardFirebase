@@ -17,6 +17,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.leaderboardkit.LeaderboardKit
+import com.leaderboardkit.sample.SampleUser
 import com.leaderboardkit.sample.ui.DemoScaffold
 import com.leaderboardkit.sample.ui.randomDemoScore
 import kotlinx.coroutines.launch
@@ -40,7 +41,7 @@ fun CustomRowBoardDemo(onBack: () -> Unit) {
         snackbarHostState = snackbarHostState,
         onSubmitRandomScore = {
             coroutineScope.launch {
-                LeaderboardKit.submitScore(config, randomDemoScore())
+                LeaderboardKit.submitScore(config, randomDemoScore(), SampleUser.PROFILE_METADATA)
                     .onFailure { snackbarHostState.showSnackbar(it.message ?: "Submission failed") }
             }
         },

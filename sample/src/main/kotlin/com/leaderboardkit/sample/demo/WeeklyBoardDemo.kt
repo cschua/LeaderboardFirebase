@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.leaderboardkit.LeaderboardKit
 import com.leaderboardkit.domain.model.TimeWindow
+import com.leaderboardkit.sample.SampleUser
 import com.leaderboardkit.sample.ui.DemoScaffold
 import com.leaderboardkit.sample.ui.ResetCountdown
 import com.leaderboardkit.sample.ui.randomDemoScore
@@ -40,7 +41,7 @@ fun WeeklyBoardDemo(onBack: () -> Unit) {
         snackbarHostState = snackbarHostState,
         onSubmitRandomScore = {
             coroutineScope.launch {
-                LeaderboardKit.submitScore(config, randomDemoScore())
+                LeaderboardKit.submitScore(config, randomDemoScore(), SampleUser.PROFILE_METADATA)
                     .onFailure { snackbarHostState.showSnackbar(it.message ?: "Submission failed") }
             }
         },
