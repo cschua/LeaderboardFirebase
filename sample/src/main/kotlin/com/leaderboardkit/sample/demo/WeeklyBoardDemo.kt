@@ -28,7 +28,7 @@ import kotlinx.datetime.TimeZone
 @Composable
 fun WeeklyBoardDemo(onBack: () -> Unit) {
     val config = remember {
-        LeaderboardKit.buildConfig("weekly_coins") {
+        LeaderboardKit.buildConfig("weekly_demo") {
             timeWindow = TimeWindow.Weekly(resetTimeZone = TimeZone.UTC)
         }
     }

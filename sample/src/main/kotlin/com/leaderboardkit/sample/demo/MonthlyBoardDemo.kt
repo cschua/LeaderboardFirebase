@@ -22,7 +22,7 @@ import kotlinx.datetime.TimeZone
 @Composable
 fun MonthlyBoardDemo(onBack: () -> Unit) {
     val config = remember {
-        LeaderboardKit.buildConfig("monthly_coins") {
+        LeaderboardKit.buildConfig("monthly_demo") {
             timeWindow = TimeWindow.Monthly(resetTimeZone = TimeZone.UTC)
         }
     }
