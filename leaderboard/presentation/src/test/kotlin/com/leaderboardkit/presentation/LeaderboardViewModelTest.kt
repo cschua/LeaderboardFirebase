@@ -3,15 +3,19 @@ package com.leaderboardkit.presentation
 import app.cash.turbine.test
 import com.google.common.truth.Truth.assertThat
 import com.leaderboardkit.data.fake.FakeLeaderboardRepository
+import com.leaderboardkit.domain.model.LeaderboardConfig
 import com.leaderboardkit.domain.model.LeaderboardEntry
 import com.leaderboardkit.domain.model.LeaderboardScope
 import com.leaderboardkit.domain.model.leaderboardConfig
+import com.leaderboardkit.domain.repository.LeaderboardRepository
 import com.leaderboardkit.domain.usecase.GetNearbyRanksUseCase
 import com.leaderboardkit.domain.usecase.LoadMoreUseCase
 import com.leaderboardkit.domain.usecase.ObserveLeaderboardUseCase
 import com.leaderboardkit.domain.usecase.SubmitScoreUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -44,7 +48,16 @@ class LeaderboardViewModelTest {
     private fun entry(userId: String, score: Long) =
         LeaderboardEntry(userId, displayName = userId, avatarId = "avatar_01", score = score, rank = null)
 
-    private fun viewModel(repository: FakeLeaderboardRepository, currentUserId: String = "me") = LeaderboardViewModel(
+    /** Delegates everything to [delegate] except [observeEntries], which throws for any config whose [LeaderboardConfig.scope] is [failingScope]. */
+    private class FlakyRepository(
+        private val delegate: LeaderboardRepository,
+        private val failingScope: LeaderboardScope,
+    ) : LeaderboardRepository by delegate {
+        override fun observeEntries(config: LeaderboardConfig): Flow<List<LeaderboardEntry>> =
+            if (config.scope == failingScope) flow { throw IllegalStateException("boom") } else delegate.observeEntries(config)
+    }
+
+    private fun viewModel(repository: LeaderboardRepository, currentUserId: String = "me") = LeaderboardViewModel(
         initialConfig = leaderboardConfig("board") { pageSize = 5 },
         currentUserId = currentUserId,
         dependencies = LeaderboardDependencies(
@@ -127,6 +140,34 @@ class LeaderboardViewModelTest {
             latest = awaitItem()
             assertThat(latest.config.scope).isEqualTo(LeaderboardScope.Category("boss_rush"))
             assertThat(latest.isLoading).isTrue()
+        }
+    }
+
+    @Test
+    fun `an error on one config does not block entries loading after a later config change`() = runTest {
+        val failingScope = LeaderboardScope.Category("boom")
+        val repository = FlakyRepository(FakeLeaderboardRepository(listOf(entry("me", 10))), failingScope)
+        val vm = viewModel(repository, currentUserId = "me")
+
+        vm.state.test {
+            var latest = awaitItem()
+            while (latest.entries.isEmpty()) latest = awaitItem()
+
+            vm.onIntent(LeaderboardIntent.ChangeScope(failingScope))
+            latest = awaitItem()
+            while (latest.error == null) latest = awaitItem()
+            assertThat(latest.isLoading).isFalse()
+
+            // The board this errored on isn't the only board this ViewModel will ever
+            // show — a live app keeps running after a transient read failure, and the
+            // *next* config change must still be able to load entries. If `.catch` ever
+            // regresses to wrapping the whole `flatMapLatest` chain again (see
+            // `entriesFlow` KDoc), this config change would spin on `isLoading` forever.
+            vm.onIntent(LeaderboardIntent.ChangeScope(LeaderboardScope.Global))
+            latest = awaitItem()
+            assertThat(latest.isLoading).isTrue()
+            while (latest.entries.isEmpty()) latest = awaitItem()
+            assertThat(latest.entries.map { it.userId }).containsExactly("me")
         }
     }
 }

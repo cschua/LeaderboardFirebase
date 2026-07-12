@@ -33,6 +33,7 @@ render.experimental.xml
 
 # Google Services (e.g. APIs or Firebase)
 sample/google-services.json
+sampleRetro/google-services.json
 
 # Firebase Admin SDK service account key (scripts/seed-firestore.js) — never commit this
 scripts/serviceAccountKey.json

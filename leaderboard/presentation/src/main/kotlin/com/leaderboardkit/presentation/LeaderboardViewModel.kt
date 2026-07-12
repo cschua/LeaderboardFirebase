@@ -12,6 +12,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -20,7 +21,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -33,15 +34,19 @@ import kotlinx.coroutines.launch
  *
  * ### currentUserEntry resolution
  * On every entries update, if [currentUserId] is present in the loaded window its
- * entry is mirrored straight from [entries]. If it's not there — the common case
- * for a large board where the user is way outside the top page — a one-shot
- * `getNearbyRanks(currentUserId, radius = 1, ...)` call resolves it instead. Per
- * the repository contract that call returns the anchor entry itself alongside its
- * neighbors, so `radius = 1` is the cheapest lookup that's guaranteed to include it.
+ * entry is mirrored straight from [entries] — folded into the *same* `_state.update`
+ * call as the entries themselves (see `init`'s collector), so no collector of
+ * [state] ever observes entries-loaded-but-currentUserEntry-still-stale as its own
+ * distinct value. If it's not there — the common case for a large board where the
+ * user is way outside the top page — a one-shot `getNearbyRanks(currentUserId,
+ * radius = 1, ...)` call resolves it instead, necessarily as a separate later
+ * update since it requires its own suspending round trip. Per the repository
+ * contract that call returns the anchor entry itself alongside its neighbors, so
+ * `radius = 1` is the cheapest lookup that's guaranteed to include it.
  *
  * ### Upstream sharing
  * [entriesFlow] is the *only* place [LeaderboardDependencies.observeLeaderboard] is
- * collected, shared via `stateIn(..., SharingStarted.WhileSubscribed(5000))`. If a
+ * collected, shared via `shareIn(..., SharingStarted.WhileSubscribed(5000), replay = 1)`. If a
  * host renders both [com.leaderboardkit.ui.screen.LeaderboardScreen] and a
  * [com.leaderboardkit.ui.screen.LeaderboardWidget] off the same ViewModel, or Compose
  * tears down and recreates a collector across a configuration change, neither
@@ -66,17 +71,46 @@ class LeaderboardViewModel(
 
     private val observeKey = MutableStateFlow(ObserveKey(initialConfig, refreshToken = 0))
 
-    private val entriesFlow: StateFlow<List<LeaderboardEntry>> = observeKey
-        .flatMapLatest { key -> dependencies.observeLeaderboard(key.config) }
-        .catch { throwable -> dispatchFailure(throwable) }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+    /**
+     * `shareIn(..., replay = 1)`, not `stateIn` — a `SharedFlow`, unlike a
+     * `StateFlow`, does not conflate structurally-equal consecutive values. Two
+     * back-to-back loads that happen to return the *same* entries (e.g. an empty
+     * board both before and after a `ChangeTimeWindow`, or a `refresh()` that
+     * finds nothing new) are still genuinely distinct *events* — the second one
+     * still needs to reach `init`'s collector below to flip `isLoading` (set by
+     * [changeConfig]/[refresh] just before this fires) back to `false`. A
+     * `StateFlow` here would silently drop that second load as a no-op update
+     * (same `.value`, no re-emission), leaving `isLoading` stuck `true` forever.
+     */
+    private val entriesFlow: SharedFlow<List<LeaderboardEntry>> = observeKey
+        .flatMapLatest { key ->
+            // .catch scoped to this one attempt, not the whole chain: it must not
+            // swallow all the way past flatMapLatest, or the exception takes the
+            // outer subscription to `observeKey` down with it — since `catch` never
+            // re-emits, the flow simply completes here, and with a permanent
+            // subscriber below (see `init`), WhileSubscribed never sees the 0
+            // subscribers -> 1 transition needed to restart it. That would
+            // permanently stop entries from loading for every *future* config
+            // change too, not just the one that failed.
+            dependencies.observeLeaderboard(key.config)
+                .catch { throwable -> dispatchFailure(throwable) }
+        }
+        .shareIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), replay = 1)
 
     private var resolveCurrentUserJob: Job? = null
 
     init {
         entriesFlow.onEach { entries ->
-            _state.update { reduceLeaderboardState(it, LeaderboardChange.EntriesLoaded(entries)) }
-            resolveCurrentUserEntry(entries)
+            val inWindow = entries.firstOrNull { it.userId == currentUserId }
+            // Both changes folded into one _state.update call rather than two back-to-back
+            // ones: a collector of `state` (e.g. a UI layer, or a test asserting on the very
+            // next value) would otherwise be able to observe the entries-loaded-but-
+            // currentUserEntry-still-stale-or-null moment as its own distinct state.
+            _state.update { current ->
+                val loaded = reduceLeaderboardState(current, LeaderboardChange.EntriesLoaded(entries))
+                if (inWindow != null) reduceLeaderboardState(loaded, LeaderboardChange.CurrentUserEntryResolved(inWindow)) else loaded
+            }
+            if (inWindow == null) resolveCurrentUserEntry()
         }.launchIn(viewModelScope)
     }
 
@@ -118,28 +152,19 @@ class LeaderboardViewModel(
             dependencies.submitScore(currentUserId, score, config)
                 .onSuccess {
                     _effects.trySend(LeaderboardEffect.ScrollToUserRank)
-                    resolveCurrentUserEntry(_state.value.entries, force = true)
+                    // Always the async lookup, never the in-window fast path: the entries
+                    // this ViewModel currently holds may still be the pre-submission
+                    // snapshot on a [com.leaderboardkit.domain.model.RefreshStrategy.Polling]/
+                    // [com.leaderboardkit.domain.model.RefreshStrategy.ManualOnly] board, so
+                    // trusting them would show a stale score/rank until the next tick.
+                    resolveCurrentUserEntry()
                 }
                 .onFailure { throwable -> dispatchFailure(throwable) }
         }
     }
 
-    /**
-     * @param force Skip the fast (already-in-window) path and always hit
-     *   `getNearbyRanks` for a fresh read. Used right after [submitScore]: the
-     *   [entries] passed in may still be the pre-submission snapshot on a
-     *   [com.leaderboardkit.domain.model.RefreshStrategy.Polling]/[com.leaderboardkit.domain.model.RefreshStrategy.ManualOnly]
-     *   board, so trusting it would show a stale score/rank until the next tick.
-     */
-    private fun resolveCurrentUserEntry(entries: List<LeaderboardEntry>, force: Boolean = false) {
-        if (!force) {
-            val inWindow = entries.firstOrNull { it.userId == currentUserId }
-            if (inWindow != null) {
-                _state.update { reduceLeaderboardState(it, LeaderboardChange.CurrentUserEntryResolved(inWindow)) }
-                return
-            }
-        }
-
+    /** One-shot `getNearbyRanks` lookup for [currentUserId]; see [entriesFlow]'s `init` collector for the in-window fast path. */
+    private fun resolveCurrentUserEntry() {
         resolveCurrentUserJob?.cancel()
         resolveCurrentUserJob = viewModelScope.launch {
             dependencies.getNearbyRanks(currentUserId, radius = 1, _state.value.config)
