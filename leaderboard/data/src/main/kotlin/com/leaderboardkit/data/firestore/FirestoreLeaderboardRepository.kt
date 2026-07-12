@@ -5,6 +5,7 @@ import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.Source
+import com.leaderboardkit.domain.annotations.InternalLeaderboardKitApi
 import com.leaderboardkit.domain.model.LeaderboardConfig
 import com.leaderboardkit.domain.model.LeaderboardEntry
 import com.leaderboardkit.domain.model.RefreshStrategy
@@ -48,6 +49,7 @@ import javax.inject.Inject
  * for why this library doesn't use `Flow<PagingData>`). [loadMore] is guarded by a
  * per-board [Mutex] so concurrent calls are serialized rather than racing.
  */
+@InternalLeaderboardKitApi
 class FirestoreLeaderboardRepository @Inject constructor(
     private val firestore: FirebaseFirestore,
     private val pathStrategy: FirestorePathStrategy,

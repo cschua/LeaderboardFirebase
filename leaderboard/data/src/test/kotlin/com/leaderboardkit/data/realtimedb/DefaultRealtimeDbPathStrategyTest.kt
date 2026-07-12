@@ -1,6 +1,9 @@
+@file:OptIn(InternalLeaderboardKitApi::class)
+
 package com.leaderboardkit.data.realtimedb
 
 import com.google.common.truth.Truth.assertThat
+import com.leaderboardkit.domain.annotations.InternalLeaderboardKitApi
 import com.leaderboardkit.domain.model.LeaderboardScope
 import com.leaderboardkit.domain.model.TimeWindow
 import com.leaderboardkit.domain.model.leaderboardConfig

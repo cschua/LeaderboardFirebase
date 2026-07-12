@@ -7,6 +7,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.firestore
 import com.google.firebase.functions.FirebaseFunctions
 import com.google.firebase.functions.functions
+import com.leaderboardkit.domain.annotations.InternalLeaderboardKitApi
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -21,6 +22,7 @@ import javax.inject.Singleton
  */
 @Module
 @InstallIn(SingletonComponent::class)
+@InternalLeaderboardKitApi
 object FirebaseProvidersModule {
 
     @Provides

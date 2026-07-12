@@ -1,9 +1,11 @@
 package com.leaderboardkit.presentation
 
+import com.leaderboardkit.domain.annotations.InternalLeaderboardKitApi
 import com.leaderboardkit.domain.model.LeaderboardScope
 import com.leaderboardkit.domain.model.TimeWindow
 
 /** User/UI-originated actions. Sent via [LeaderboardViewModel.onIntent] — never handled directly by composables. */
+@InternalLeaderboardKitApi
 sealed interface LeaderboardIntent {
     data object Refresh : LeaderboardIntent
     data object LoadMore : LeaderboardIntent

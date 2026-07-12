@@ -1,5 +1,6 @@
 package com.leaderboardkit.data.firestore
 
+import com.leaderboardkit.domain.annotations.InternalLeaderboardKitApi
 import com.leaderboardkit.domain.model.LeaderboardConfig
 
 /**
@@ -21,6 +22,7 @@ import com.leaderboardkit.domain.model.LeaderboardConfig
  * Default binding (see `LeaderboardBackendModule`) is [DirectWriteScoreSubmitter];
  * switch to [CloudFunctionScoreSubmitter] by rebinding when anti-cheat matters.
  */
+@InternalLeaderboardKitApi
 interface ScoreSubmitter {
     suspend fun submit(
         userId: String,

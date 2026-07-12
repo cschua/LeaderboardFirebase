@@ -1,5 +1,6 @@
 package com.leaderboardkit.presentation
 
+import com.leaderboardkit.domain.annotations.InternalLeaderboardKitApi
 import com.leaderboardkit.domain.model.LeaderboardConfig
 import com.leaderboardkit.domain.model.LeaderboardEntry
 
@@ -14,6 +15,7 @@ import com.leaderboardkit.domain.model.LeaderboardEntry
  * `null` only while that resolution is genuinely unknown/pending, not merely
  * because the user is off-screen.
  */
+@InternalLeaderboardKitApi
 data class LeaderboardState(
     val entries: List<LeaderboardEntry> = emptyList(),
     val currentUserEntry: LeaderboardEntry? = null,

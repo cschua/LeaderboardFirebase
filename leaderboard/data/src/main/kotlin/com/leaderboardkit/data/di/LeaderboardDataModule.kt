@@ -7,6 +7,7 @@ import com.leaderboardkit.data.firestore.ScoreSubmitter
 import com.leaderboardkit.data.ratelimit.ClientRateLimiter
 import com.leaderboardkit.data.realtimedb.DefaultRealtimeDbPathStrategy
 import com.leaderboardkit.data.realtimedb.RealtimeDbPathStrategy
+import com.leaderboardkit.domain.annotations.InternalLeaderboardKitApi
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -39,6 +40,7 @@ import kotlin.time.Duration.Companion.seconds
  */
 @Module
 @InstallIn(SingletonComponent::class)
+@InternalLeaderboardKitApi
 abstract class LeaderboardDataModule {
 
     @Binds

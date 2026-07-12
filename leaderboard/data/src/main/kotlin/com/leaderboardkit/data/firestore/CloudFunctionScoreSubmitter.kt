@@ -1,6 +1,7 @@
 package com.leaderboardkit.data.firestore
 
 import com.google.firebase.functions.FirebaseFunctions
+import com.leaderboardkit.domain.annotations.InternalLeaderboardKitApi
 import com.leaderboardkit.domain.model.LeaderboardConfig
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
@@ -24,6 +25,7 @@ import javax.inject.Named
  * // response: HttpsCallableResult with no meaningful payload (throws on rejection)
  * ```
  */
+@InternalLeaderboardKitApi
 class CloudFunctionScoreSubmitter @Inject constructor(
     private val functions: FirebaseFunctions,
     @Named("leaderboardSubmitFunctionName") private val functionName: String = "submitLeaderboardScore",

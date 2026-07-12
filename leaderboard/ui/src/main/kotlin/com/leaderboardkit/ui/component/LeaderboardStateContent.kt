@@ -1,3 +1,5 @@
+@file:OptIn(InternalLeaderboardKitApi::class)
+
 package com.leaderboardkit.ui.component
 
 import androidx.compose.foundation.layout.Arrangement
@@ -14,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.leaderboardkit.domain.annotations.InternalLeaderboardKitApi
 import com.leaderboardkit.presentation.LeaderboardError
 import com.leaderboardkit.presentation.toDisplayMessage
 import kotlin.time.Duration.Companion.seconds

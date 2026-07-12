@@ -1,3 +1,5 @@
+@file:OptIn(InternalLeaderboardKitApi::class)
+
 package com.leaderboardkit.ui.preview
 
 import androidx.compose.foundation.layout.fillMaxSize
@@ -6,6 +8,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import com.leaderboardkit.domain.annotations.InternalLeaderboardKitApi
 import com.leaderboardkit.presentation.LeaderboardState
 import com.leaderboardkit.ui.screen.LeaderboardContent
 import com.leaderboardkit.ui.theme.rememberLeaderboardTheme

@@ -6,6 +6,7 @@ import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.Query
 import com.google.firebase.database.ValueEventListener
 import com.leaderboardkit.data.common.AvatarDefaults
+import com.leaderboardkit.domain.annotations.InternalLeaderboardKitApi
 import com.leaderboardkit.domain.model.LeaderboardConfig
 import com.leaderboardkit.domain.model.LeaderboardEntry
 import com.leaderboardkit.domain.model.RefreshStrategy
@@ -34,6 +35,7 @@ import javax.inject.Inject
  * beyond that, denormalize a `rank` field via a scheduled Cloud Function/backend
  * job and read it directly instead of computing it here.
  */
+@InternalLeaderboardKitApi
 class RealtimeDbLeaderboardRepository @Inject constructor(
     private val database: DatabaseReference,
     private val pathStrategy: RealtimeDbPathStrategy,

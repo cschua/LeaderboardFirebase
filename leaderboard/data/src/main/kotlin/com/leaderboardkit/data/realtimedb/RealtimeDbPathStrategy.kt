@@ -1,15 +1,18 @@
 package com.leaderboardkit.data.realtimedb
 
 import com.leaderboardkit.data.common.TimeWindowBucket
+import com.leaderboardkit.domain.annotations.InternalLeaderboardKitApi
 import com.leaderboardkit.domain.model.LeaderboardConfig
 import com.leaderboardkit.domain.model.LeaderboardScope
 
 /** Realtime Database analogue of `FirestorePathStrategy` — resolves a config to a node path. */
+@InternalLeaderboardKitApi
 fun interface RealtimeDbPathStrategy {
     fun nodePath(config: LeaderboardConfig): String
 }
 
 /** `leaderboards/{boardId}/windows/{windowBucket}[/friendsOf/{userId}|/category/{categoryId}|/custom/{filterId}]/entries` */
+@InternalLeaderboardKitApi
 class DefaultRealtimeDbPathStrategy : RealtimeDbPathStrategy {
     override fun nodePath(config: LeaderboardConfig): String {
         val windowBucket = TimeWindowBucket.currentBucketId(config.timeWindow)

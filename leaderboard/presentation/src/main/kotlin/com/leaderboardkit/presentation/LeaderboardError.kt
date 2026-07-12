@@ -1,5 +1,6 @@
 package com.leaderboardkit.presentation
 
+import com.leaderboardkit.domain.annotations.InternalLeaderboardKitApi
 import kotlin.time.Duration
 
 /**
@@ -8,6 +9,7 @@ import kotlin.time.Duration
  * mapped to it once, at the point they're caught (see `Throwable.toLeaderboardError()`),
  * and never leak further up.
  */
+@InternalLeaderboardKitApi
 sealed interface LeaderboardError {
     data class RateLimited(val retryAfter: Duration) : LeaderboardError
     data object UserNotFound : LeaderboardError
@@ -15,12 +17,14 @@ sealed interface LeaderboardError {
 }
 
 /** Short, human-readable text for [LeaderboardEffect.ShowError] / default error state content. */
+@InternalLeaderboardKitApi
 fun LeaderboardError.toDisplayMessage(): String = when (this) {
     is LeaderboardError.RateLimited -> "You're submitting scores too quickly. Try again in ${retryAfter.inWholeSeconds}s."
     is LeaderboardError.UserNotFound -> "No leaderboard entry found."
     is LeaderboardError.Unknown -> message.ifBlank { "Something went wrong." }
 }
 
+@OptIn(InternalLeaderboardKitApi::class)
 internal fun Throwable.toLeaderboardError(): LeaderboardError = when (this) {
     is com.leaderboardkit.domain.model.LeaderboardException.RateLimitExceeded -> LeaderboardError.RateLimited(retryAfter)
     is com.leaderboardkit.domain.model.LeaderboardException.UserNotFound -> LeaderboardError.UserNotFound

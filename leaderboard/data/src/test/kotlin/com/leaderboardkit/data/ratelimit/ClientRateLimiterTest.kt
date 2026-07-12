@@ -1,6 +1,9 @@
+@file:OptIn(InternalLeaderboardKitApi::class)
+
 package com.leaderboardkit.data.ratelimit
 
 import com.google.common.truth.Truth.assertThat
+import com.leaderboardkit.domain.annotations.InternalLeaderboardKitApi
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 import kotlin.time.Duration.Companion.seconds

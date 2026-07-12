@@ -1,3 +1,5 @@
+@file:OptIn(InternalLeaderboardKitApi::class)
+
 package com.leaderboardkit.sampleretro.ui
 
 import androidx.compose.foundation.layout.Arrangement
@@ -19,6 +21,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.leaderboardkit.domain.annotations.InternalLeaderboardKitApi
 import com.leaderboardkit.presentation.LeaderboardError
 import com.leaderboardkit.presentation.toDisplayMessage
 import com.leaderboardkit.sampleretro.ui.theme.RetroCyan

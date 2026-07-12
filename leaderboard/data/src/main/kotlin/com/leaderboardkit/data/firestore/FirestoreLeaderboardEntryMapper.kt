@@ -1,6 +1,7 @@
 package com.leaderboardkit.data.firestore
 
 import com.leaderboardkit.data.common.AvatarDefaults
+import com.leaderboardkit.domain.annotations.InternalLeaderboardKitApi
 import com.leaderboardkit.domain.model.LeaderboardEntry
 
 private const val FIELD_USER_ID = "userId"
@@ -20,6 +21,7 @@ private const val FIELD_METADATA = "metadata"
  * in the module that knows the on-the-wire field names — repositories must never
  * map fields inline.
  */
+@InternalLeaderboardKitApi
 class FirestoreLeaderboardEntryMapper {
 
     @Suppress("UNCHECKED_CAST")

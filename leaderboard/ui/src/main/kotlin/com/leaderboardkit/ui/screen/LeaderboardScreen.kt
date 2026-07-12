@@ -1,3 +1,5 @@
+@file:OptIn(InternalLeaderboardKitApi::class)
+
 package com.leaderboardkit.ui.screen
 
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -8,6 +10,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.leaderboardkit.domain.annotations.InternalLeaderboardKitApi
 import com.leaderboardkit.domain.model.LeaderboardConfig
 import com.leaderboardkit.domain.model.LeaderboardEntry
 import com.leaderboardkit.presentation.LeaderboardDependencies

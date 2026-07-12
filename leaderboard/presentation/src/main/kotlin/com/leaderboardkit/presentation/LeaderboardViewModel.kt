@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import com.leaderboardkit.domain.annotations.InternalLeaderboardKitApi
 import com.leaderboardkit.domain.model.LeaderboardConfig
 import com.leaderboardkit.domain.model.LeaderboardEntry
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -53,6 +54,7 @@ import kotlinx.coroutines.launch
  * re-attaches a new Firestore listener/poll loop — they all observe the one shared
  * upstream. The 5s grace period survives a rotation without a full re-fetch.
  */
+@InternalLeaderboardKitApi
 @OptIn(ExperimentalCoroutinesApi::class)
 class LeaderboardViewModel(
     initialConfig: LeaderboardConfig,

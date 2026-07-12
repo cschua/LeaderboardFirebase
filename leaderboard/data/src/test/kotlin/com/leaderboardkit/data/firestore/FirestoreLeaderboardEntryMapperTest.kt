@@ -1,7 +1,10 @@
+@file:OptIn(InternalLeaderboardKitApi::class)
+
 package com.leaderboardkit.data.firestore
 
 import com.google.common.truth.Truth.assertThat
 import com.leaderboardkit.data.common.AvatarDefaults
+import com.leaderboardkit.domain.annotations.InternalLeaderboardKitApi
 import com.leaderboardkit.domain.model.LeaderboardEntry
 import org.junit.Test
 

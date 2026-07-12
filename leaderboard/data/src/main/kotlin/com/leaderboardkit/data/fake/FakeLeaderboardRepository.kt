@@ -1,6 +1,7 @@
 package com.leaderboardkit.data.fake
 
 import com.leaderboardkit.data.common.AvatarDefaults
+import com.leaderboardkit.domain.annotations.InternalLeaderboardKitApi
 import com.leaderboardkit.domain.model.LeaderboardConfig
 import com.leaderboardkit.domain.model.LeaderboardEntry
 import com.leaderboardkit.domain.model.SortDirection
@@ -20,6 +21,7 @@ import kotlinx.coroutines.sync.withLock
  * One instance is meant to back a single board at a time; it does not partition
  * data by [LeaderboardConfig.boardId] the way the real backends do.
  */
+@InternalLeaderboardKitApi
 class FakeLeaderboardRepository(initialEntries: List<LeaderboardEntry> = emptyList()) : LeaderboardRepository {
 
     private val allEntries = MutableStateFlow(initialEntries)

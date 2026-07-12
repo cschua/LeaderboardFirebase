@@ -1,3 +1,5 @@
+@file:OptIn(InternalLeaderboardKitApi::class)
+
 package com.leaderboardkit.ui.screen
 
 import androidx.compose.foundation.layout.Column
@@ -16,6 +18,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.leaderboardkit.domain.annotations.InternalLeaderboardKitApi
 import com.leaderboardkit.domain.model.LeaderboardConfig
 import com.leaderboardkit.domain.model.LeaderboardEntry
 import com.leaderboardkit.domain.model.leaderboardConfig

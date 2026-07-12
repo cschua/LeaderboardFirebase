@@ -1,6 +1,7 @@
 package com.leaderboardkit.data.firestore
 
 import com.leaderboardkit.data.common.TimeWindowBucket
+import com.leaderboardkit.domain.annotations.InternalLeaderboardKitApi
 import com.leaderboardkit.domain.model.LeaderboardConfig
 import com.leaderboardkit.domain.model.LeaderboardScope
 
@@ -12,6 +13,7 @@ import com.leaderboardkit.domain.model.LeaderboardScope
  * implementation — typically [DefaultFirestorePathStrategy] wrapped with a
  * tenant/app-id prefix — and bind it in place of the default via Hilt.
  */
+@InternalLeaderboardKitApi
 fun interface FirestorePathStrategy {
     fun collectionPath(config: LeaderboardConfig): String
 }
@@ -25,6 +27,7 @@ fun interface FirestorePathStrategy {
  * own collection, which is what makes window expiration a no-op rather than a
  * purge: old buckets are simply never addressed again.
  */
+@InternalLeaderboardKitApi
 class DefaultFirestorePathStrategy : FirestorePathStrategy {
     override fun collectionPath(config: LeaderboardConfig): String {
         val windowBucket = TimeWindowBucket.currentBucketId(config.timeWindow)

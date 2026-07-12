@@ -1,6 +1,7 @@
 package com.leaderboardkit.data.realtimedb
 
 import com.leaderboardkit.data.common.AvatarDefaults
+import com.leaderboardkit.domain.annotations.InternalLeaderboardKitApi
 import com.leaderboardkit.domain.model.LeaderboardEntry
 
 private const val FIELD_DISPLAY_NAME = "displayName"
@@ -18,6 +19,7 @@ private const val FIELD_METADATA = "metadata"
  * [LeaderboardEntry.rank] is always assigned client-side by the repository from
  * list position, never read from the stored value.
  */
+@InternalLeaderboardKitApi
 class RealtimeDbLeaderboardEntryMapper {
 
     @Suppress("UNCHECKED_CAST")

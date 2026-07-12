@@ -1,6 +1,9 @@
+@file:OptIn(InternalLeaderboardKitApi::class)
+
 package com.leaderboardkit.presentation
 
 import com.google.common.truth.Truth.assertThat
+import com.leaderboardkit.domain.annotations.InternalLeaderboardKitApi
 import com.leaderboardkit.domain.model.LeaderboardEntry
 import com.leaderboardkit.domain.model.leaderboardConfig
 import org.junit.Test

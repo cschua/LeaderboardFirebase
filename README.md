@@ -24,12 +24,18 @@ LeaderboardKit.screen(config = LeaderboardKit.buildConfig("global_alltime"))
 :leaderboard:ui            Compose screens, theme, row composables
 :leaderboard:public-api    LeaderboardKit facade — the supported integration surface
 :sample                    demo app exercising the facade only
+:sampleRetro               demo app bypassing the facade — see Advanced usage
 ```
 
 `:leaderboard:public-api` only ever depends on the four lower modules and exposes `LeaderboardKit` +
 `LeaderboardKitConfig`. The lower modules stay independently usable (and stay public, not `internal`)
 for advanced integration — see [Advanced usage](#advanced-usage) — but `:leaderboard:public-api` is
 the documented, supported entry point.
+
+`:sample` only ever calls `LeaderboardKit.initialize`/`.screen`/`.widget` — the facade — and never
+needs the opt-in described below. `:sampleRetro` is the one app in this repo that deliberately does
+not use the facade: it constructs `FirestoreLeaderboardRepository` and drives `LeaderboardViewModel`
+directly, exercising the advanced-usage path end to end.
 
 ## Setup
 
@@ -196,6 +202,15 @@ isCurrentUser: Boolean) -> Unit` override, see `:sample`'s "custom row content" 
 ## Advanced usage
 
 Most apps only ever touch `:leaderboard:public-api`. Depend on the lower modules directly instead if you need to:
+
+Everything reachable this way (`FirestoreLeaderboardRepository`, `DirectWriteScoreSubmitter`,
+`FirestorePathStrategy`, `LeaderboardViewModel`, `LeaderboardDependencies`, `LeaderboardState`/`Intent`/`Effect`/`Error`,
+and the rest of `:leaderboard:data`/`:leaderboard:presentation`'s public classes) is marked
+`@InternalLeaderboardKitApi`, a `@RequiresOptIn` marker — public for cross-module wiring and this
+escape hatch, but not the stable default contract `:leaderboard:public-api` is. The compiler will
+refuse to let you reference it until you add `@OptIn(InternalLeaderboardKitApi::class)` (or
+`@file:OptIn(InternalLeaderboardKitApi::class)` at the top of the file) at your call site — see
+`:sampleRetro` for a full worked example of what that opt-in looks like in practice.
 
 - **Swap Firestore for the Realtime Database reference adapter**, or supply your own
   `LeaderboardRepository` — `LeaderboardKit` only ever wires up Firestore. Bind your own repository

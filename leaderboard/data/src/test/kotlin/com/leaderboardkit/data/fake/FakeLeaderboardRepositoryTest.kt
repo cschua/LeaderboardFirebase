@@ -1,8 +1,11 @@
+@file:OptIn(InternalLeaderboardKitApi::class)
+
 package com.leaderboardkit.data.fake
 
 import app.cash.turbine.test
 import com.google.common.truth.Truth.assertThat
 import com.leaderboardkit.data.common.AvatarDefaults
+import com.leaderboardkit.domain.annotations.InternalLeaderboardKitApi
 import com.leaderboardkit.domain.model.LeaderboardEntry
 import com.leaderboardkit.domain.model.leaderboardConfig
 import kotlinx.coroutines.test.runTest

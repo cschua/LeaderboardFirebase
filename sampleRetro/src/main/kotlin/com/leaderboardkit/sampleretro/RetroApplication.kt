@@ -1,3 +1,5 @@
+@file:OptIn(InternalLeaderboardKitApi::class)
+
 package com.leaderboardkit.sampleretro
 
 import android.app.Application
@@ -10,6 +12,7 @@ import com.leaderboardkit.data.firestore.DirectWriteScoreSubmitter
 import com.leaderboardkit.data.firestore.FirestoreLeaderboardEntryMapper
 import com.leaderboardkit.data.firestore.FirestoreLeaderboardRepository
 import com.leaderboardkit.data.ratelimit.ClientRateLimiter
+import com.leaderboardkit.domain.annotations.InternalLeaderboardKitApi
 import com.leaderboardkit.domain.repository.LeaderboardRepository
 import com.leaderboardkit.domain.usecase.GetNearbyRanksUseCase
 import com.leaderboardkit.domain.usecase.LoadMoreUseCase

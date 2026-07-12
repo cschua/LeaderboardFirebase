@@ -1,5 +1,6 @@
 package com.leaderboardkit.data.ratelimit
 
+import com.leaderboardkit.domain.annotations.InternalLeaderboardKitApi
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlin.time.Duration
@@ -14,6 +15,7 @@ import kotlin.time.TimeSource
  * what [com.leaderboardkit.data.firestore.CloudFunctionScoreSubmitter] is for; see
  * its KDoc for the direct-write-vs-Cloud-Function tradeoff.
  */
+@InternalLeaderboardKitApi
 class ClientRateLimiter(private val minInterval: Duration) {
 
     private val mutex = Mutex()

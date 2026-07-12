@@ -1,5 +1,6 @@
 package com.leaderboardkit.presentation
 
+import com.leaderboardkit.domain.annotations.InternalLeaderboardKitApi
 import com.leaderboardkit.domain.usecase.GetNearbyRanksUseCase
 import com.leaderboardkit.domain.usecase.LoadMoreUseCase
 import com.leaderboardkit.domain.usecase.ObserveLeaderboardUseCase
@@ -16,6 +17,7 @@ import com.leaderboardkit.domain.usecase.SubmitScoreUseCase
  * backed by whichever [com.leaderboardkit.domain.repository.LeaderboardRepository]
  * they've wired up.
  */
+@InternalLeaderboardKitApi
 data class LeaderboardDependencies(
     val observeLeaderboard: ObserveLeaderboardUseCase,
     val loadMore: LoadMoreUseCase,

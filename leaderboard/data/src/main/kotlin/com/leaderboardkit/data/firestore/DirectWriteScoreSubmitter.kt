@@ -3,6 +3,7 @@ package com.leaderboardkit.data.firestore
 import com.google.firebase.firestore.FirebaseFirestore
 import com.leaderboardkit.data.common.AvatarDefaults
 import com.leaderboardkit.data.ratelimit.ClientRateLimiter
+import com.leaderboardkit.domain.annotations.InternalLeaderboardKitApi
 import com.leaderboardkit.domain.model.LeaderboardConfig
 import com.leaderboardkit.domain.model.LeaderboardEntry
 import com.leaderboardkit.domain.model.LeaderboardException
@@ -20,6 +21,7 @@ import javax.inject.Inject
  * selection yet). Those two keys are stripped from the persisted `metadata`
  * map so they aren't duplicated with the top-level fields.
  */
+@InternalLeaderboardKitApi
 class DirectWriteScoreSubmitter @Inject constructor(
     private val firestore: FirebaseFirestore,
     private val pathStrategy: FirestorePathStrategy,

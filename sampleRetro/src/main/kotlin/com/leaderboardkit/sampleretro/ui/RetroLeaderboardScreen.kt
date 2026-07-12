@@ -1,3 +1,5 @@
+@file:OptIn(InternalLeaderboardKitApi::class)
+
 package com.leaderboardkit.sampleretro.ui
 
 import androidx.compose.foundation.background
@@ -37,6 +39,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.leaderboardkit.domain.annotations.InternalLeaderboardKitApi
 import com.leaderboardkit.presentation.LeaderboardDependencies
 import com.leaderboardkit.presentation.LeaderboardEffect
 import com.leaderboardkit.presentation.LeaderboardIntent

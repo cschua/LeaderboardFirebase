@@ -1,5 +1,8 @@
+@file:OptIn(InternalLeaderboardKitApi::class)
+
 package com.leaderboardkit.presentation
 
+import com.leaderboardkit.domain.annotations.InternalLeaderboardKitApi
 import com.leaderboardkit.domain.model.LeaderboardConfig
 import com.leaderboardkit.domain.model.LeaderboardEntry
 

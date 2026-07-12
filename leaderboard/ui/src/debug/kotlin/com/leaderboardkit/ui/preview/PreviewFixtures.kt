@@ -1,7 +1,10 @@
+@file:OptIn(InternalLeaderboardKitApi::class)
+
 package com.leaderboardkit.ui.preview
 
 import com.leaderboardkit.data.common.AvatarDefaults
 import com.leaderboardkit.data.fake.FakeLeaderboardRepository
+import com.leaderboardkit.domain.annotations.InternalLeaderboardKitApi
 import com.leaderboardkit.domain.model.LeaderboardConfig
 import com.leaderboardkit.domain.model.LeaderboardEntry
 import com.leaderboardkit.domain.model.leaderboardConfig
