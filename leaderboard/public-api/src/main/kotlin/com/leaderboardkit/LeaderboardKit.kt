@@ -1,6 +1,7 @@
 package com.leaderboardkit
 
 import android.content.Context
+import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.google.firebase.FirebaseApp
@@ -43,11 +44,12 @@ import kotlin.time.Duration.Companion.seconds
  */
 object LeaderboardKit {
 
-    @Volatile
-    private var kitConfig: LeaderboardKitConfig? = null
+    private const val TAG = "LeaderboardKit"
+
+    private data class State(val kitConfig: LeaderboardKitConfig, val dependencies: LeaderboardDependencies)
 
     @Volatile
-    private var dependencies: LeaderboardDependencies? = null
+    private var state: State? = null
 
     /**
      * One-time setup — call from `Application.onCreate()` (or equivalent) before
@@ -55,25 +57,36 @@ object LeaderboardKit {
      * unless [LeaderboardKitConfig.firebaseAppName] names a secondary one),
      * constructs the direct-write Firestore repository, and wires the four use
      * cases behind it.
+     *
+     * Safe to call again to swap the active [LeaderboardKitConfig] (e.g. account
+     * switch, tests) — re-initialization replaces the previous state atomically
+     * and logs a warning rather than failing, since in-flight work built against
+     * the old repository/use cases is left to complete on its own.
      */
     fun initialize(context: Context, config: LeaderboardKitConfig) {
-        FirebaseApp.initializeApp(context.applicationContext)
-        val firebaseApp = config.firebaseAppName?.let { FirebaseApp.getInstance(it) } ?: FirebaseApp.getInstance()
-        val firestore = FirebaseFirestore.getInstance(firebaseApp)
+        synchronized(this) {
+            if (state != null) {
+                Log.w(TAG, "LeaderboardKit.initialize() called again — replacing the existing configuration.")
+            }
 
-        val pathStrategy = DefaultFirestorePathStrategy()
-        val mapper = FirestoreLeaderboardEntryMapper()
-        val rateLimiter = ClientRateLimiter(minInterval = 1.seconds)
-        val scoreSubmitter = DirectWriteScoreSubmitter(firestore, pathStrategy, mapper, rateLimiter)
-        val repository: LeaderboardRepository = FirestoreLeaderboardRepository(firestore, pathStrategy, mapper, scoreSubmitter)
+            FirebaseApp.initializeApp(context.applicationContext)
+            val firebaseApp = config.firebaseAppName?.let { FirebaseApp.getInstance(it) } ?: FirebaseApp.getInstance()
+            val firestore = FirebaseFirestore.getInstance(firebaseApp)
 
-        dependencies = LeaderboardDependencies(
-            observeLeaderboard = ObserveLeaderboardUseCase(repository),
-            loadMore = LoadMoreUseCase(repository),
-            submitScore = SubmitScoreUseCase(repository),
-            getNearbyRanks = GetNearbyRanksUseCase(repository),
-        )
-        kitConfig = config
+            val pathStrategy = DefaultFirestorePathStrategy()
+            val mapper = FirestoreLeaderboardEntryMapper()
+            val rateLimiter = ClientRateLimiter(minInterval = 1.seconds)
+            val scoreSubmitter = DirectWriteScoreSubmitter(firestore, pathStrategy, mapper, rateLimiter)
+            val repository: LeaderboardRepository = FirestoreLeaderboardRepository(firestore, pathStrategy, mapper, scoreSubmitter)
+
+            val dependencies = LeaderboardDependencies(
+                observeLeaderboard = ObserveLeaderboardUseCase(repository),
+                loadMore = LoadMoreUseCase(repository),
+                submitScore = SubmitScoreUseCase(repository),
+                getNearbyRanks = GetNearbyRanksUseCase(repository),
+            )
+            state = State(config, dependencies)
+        }
     }
 
     /** [leaderboardConfig] pre-seeded with [LeaderboardKitConfig.defaultScope] so most boards only need a [boardId]. */
@@ -92,11 +105,11 @@ object LeaderboardKit {
         rowContent: (@Composable (entry: LeaderboardEntry, isCurrentUser: Boolean) -> Unit)? = null,
         onShowError: (String) -> Unit = {},
     ) {
-        val cfg = requireConfig()
+        val (cfg, deps) = requireState()
         LeaderboardScreen(
             config = config,
             currentUserId = cfg.currentUserId(),
-            dependencies = requireDependencies(),
+            dependencies = deps,
             theme = theme,
             modifier = modifier,
             rowContent = rowContent,
@@ -114,11 +127,11 @@ object LeaderboardKit {
         topCount: Int = 5,
         onSeeAllClick: (() -> Unit)? = null,
     ) {
-        val cfg = requireConfig()
+        val (cfg, deps) = requireState()
         LeaderboardWidget(
             config = config,
             currentUserId = cfg.currentUserId(),
-            dependencies = requireDependencies(),
+            dependencies = deps,
             theme = theme,
             modifier = modifier,
             topCount = topCount,
@@ -139,15 +152,15 @@ object LeaderboardKit {
         score: Long,
         metadata: Map<String, Any> = emptyMap(),
     ): Result<Unit> {
-        val cfg = requireConfig()
-        return requireDependencies().submitScore(cfg.currentUserId(), score, config, metadata)
+        val (cfg, deps) = requireState()
+        return deps.submitScore(cfg.currentUserId(), score, config, metadata)
     }
 
-    private fun requireConfig(): LeaderboardKitConfig = checkNotNull(kitConfig) {
+    private fun requireState(): State = checkNotNull(state) {
         "LeaderboardKit.initialize(context, config) must be called before use — typically in Application.onCreate()."
     }
 
-    private fun requireDependencies(): LeaderboardDependencies = checkNotNull(dependencies) {
-        "LeaderboardKit.initialize(context, config) must be called before use — typically in Application.onCreate()."
-    }
+    private fun requireConfig(): LeaderboardKitConfig = requireState().kitConfig
+
+    private fun requireDependencies(): LeaderboardDependencies = requireState().dependencies
 }
