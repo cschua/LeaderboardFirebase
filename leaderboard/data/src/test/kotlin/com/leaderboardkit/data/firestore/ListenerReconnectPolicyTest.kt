@@ -39,4 +39,33 @@ class ListenerReconnectPolicyTest {
 
         assertThat(policy.shouldForceServerRead("board2", now = t0.plus(31.minutes))).isFalse()
     }
+
+    @Test
+    fun `gap exactly at the stale threshold does not force a server read`() {
+        policy.markActive("board1", now = t0)
+        policy.markInactive("board1", now = t0)
+
+        assertThat(policy.shouldForceServerRead("board1", now = t0.plus(30.minutes))).isFalse()
+    }
+
+    @Test
+    fun `becoming active again resets the gap even after going stale`() {
+        policy.markActive("board1", now = t0)
+        policy.markInactive("board1", now = t0)
+        assertThat(policy.shouldForceServerRead("board1", now = t0.plus(31.minutes))).isTrue()
+
+        policy.markActive("board1", now = t0.plus(31.minutes))
+
+        assertThat(policy.shouldForceServerRead("board1", now = t0.plus(35.minutes))).isFalse()
+    }
+
+    @Test
+    fun `defaults to the real clock when now is not supplied`() {
+        val livePolicy = ListenerReconnectPolicy()
+
+        livePolicy.markActive("board1")
+        livePolicy.markInactive("board1")
+
+        assertThat(livePolicy.shouldForceServerRead("board1")).isFalse()
+    }
 }

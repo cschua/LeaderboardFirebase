@@ -110,6 +110,26 @@ class LeaderboardViewModelTest {
     }
 
     @Test
+    fun `Refresh flips isLoading and reloads even when the config is unchanged`() = runTest {
+        val repository = FakeLeaderboardRepository(listOf(entry("me", 10)))
+        val vm = viewModel(repository, currentUserId = "me")
+
+        vm.state.test {
+            var latest = awaitItem()
+            while (latest.entries.isEmpty()) latest = awaitItem()
+            assertThat(latest.isLoading).isFalse()
+
+            vm.onIntent(LeaderboardIntent.Refresh)
+
+            latest = awaitItem()
+            assertThat(latest.isLoading).isTrue()
+
+            while (latest.isLoading) latest = awaitItem()
+            assertThat(latest.entries.map { it.userId }).containsExactly("me")
+        }
+    }
+
+    @Test
     fun `LoadMore grows entries and flips canLoadMore once exhausted`() = runTest {
         val repository = FakeLeaderboardRepository((1..7).map { entry("u$it", it.toLong()) })
         val vm = viewModel(repository, currentUserId = "u1")
