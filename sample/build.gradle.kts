@@ -67,8 +67,10 @@ kover {
                     "*Factory*",
                     "*.BuildConfig",
                     "*.R",
-                    "*.R$*"
+                    "*.R$*",
+                    "*ComposableSingletons*"
                 )
+                annotatedBy("androidx.compose.runtime.Composable")
             }
         }
     }
