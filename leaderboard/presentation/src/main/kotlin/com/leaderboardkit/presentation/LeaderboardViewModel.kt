@@ -62,7 +62,7 @@ class LeaderboardViewModel(
     private val dependencies: LeaderboardDependencies,
 ) : ViewModel() {
 
-    private val _state = MutableStateFlow(LeaderboardState(config = initialConfig))
+    private val _state = MutableStateFlow(LeaderboardState(config = initialConfig, isLoading = true))
     val state: StateFlow<LeaderboardState> = _state.asStateFlow()
 
     private val _effects = Channel<LeaderboardEffect>(Channel.BUFFERED)

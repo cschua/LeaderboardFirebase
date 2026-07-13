@@ -78,7 +78,9 @@ class LeaderboardViewModelTest {
 
         vm.state.test {
             var latest = awaitItem()
+            assertThat(latest.isLoading).isTrue()
             while (latest.entries.isEmpty()) latest = awaitItem()
+            assertThat(latest.isLoading).isFalse()
             assertThat(latest.entries.map { it.userId }).containsExactly("me", "other").inOrder()
             assertThat(latest.currentUserEntry?.userId).isEqualTo("me")
         }
