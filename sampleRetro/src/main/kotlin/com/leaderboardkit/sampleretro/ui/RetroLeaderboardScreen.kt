@@ -113,6 +113,7 @@ fun RetroLeaderboardScreen(
                 )
                 if (selectedTab == RetroTab.WEEKLY) {
                     RetroResetCountdown(
+                        timeWindow = RetroTab.WEEKLY.timeWindow,
                         modifier = Modifier.fillMaxWidth().background(RetroSurface).padding(horizontal = 16.dp, vertical = 8.dp),
                     )
                 }

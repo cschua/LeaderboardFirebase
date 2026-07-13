@@ -22,9 +22,7 @@ import kotlinx.datetime.TimeZone
 /**
  * `TimeWindow.Weekly` resolves to `Polling(3min)` by default — frequent enough to
  * feel live during the window, without a live listener over what's typically a
- * large, high-churn result set (see the README's RefreshStrategy table). The
- * countdown above the board is entirely the sample app's own composable — see
- * [ResetCountdown] KDoc for why it isn't part of the library itself.
+ * large, high-churn result set (see the README's RefreshStrategy table).
  */
 @Composable
 fun WeeklyBoardDemo(onBack: () -> Unit) {
@@ -46,7 +44,7 @@ fun WeeklyBoardDemo(onBack: () -> Unit) {
         onSubmitRandomScore = rememberSubmitRandomScoreAction(client, config, SampleUser.PROFILE_METADATA, snackbarHostState),
     ) { modifier ->
         Column(modifier = modifier.fillMaxSize()) {
-            ResetCountdown(modifier = Modifier.padding(16.dp))
+            ResetCountdown(client, config, modifier = Modifier.padding(16.dp))
             LeaderboardScreen(
                 config = config,
                 modifier = Modifier.weight(1f),

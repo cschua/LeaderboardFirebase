@@ -5,6 +5,8 @@ package com.leaderboardkit
 import android.content.Context
 import com.google.firebase.FirebaseApp
 import com.google.firebase.firestore.FirebaseFirestore
+import com.leaderboardkit.data.common.formatCountdown
+import com.leaderboardkit.data.common.timeUntilNextReset
 import com.leaderboardkit.data.firestore.DefaultFirestorePathStrategy
 import com.leaderboardkit.data.firestore.DirectWriteScoreSubmitter
 import com.leaderboardkit.data.firestore.FirestoreLeaderboardEntryMapper
@@ -20,7 +22,10 @@ import com.leaderboardkit.domain.usecase.LoadMoreUseCase
 import com.leaderboardkit.domain.usecase.ObserveLeaderboardUseCase
 import com.leaderboardkit.domain.usecase.SubmitScoreUseCase
 import com.leaderboardkit.presentation.LeaderboardDependencies
+import kotlin.time.Clock
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.Instant
 
 /**
  * A scoped handle to one [LeaderboardKitConfig]'s worth of wiring — the
@@ -58,7 +63,20 @@ class LeaderboardClient internal constructor(
         score: Long,
         metadata: Map<String, Any> = emptyMap(),
     ): Result<Unit> = dependencies.submitScore(this.config.currentUserId(), score, config, metadata)
+
+    /**
+     * Time remaining until [config]'s time window next resets, anchored to that
+     * window's own reset zone. `null` for [com.leaderboardkit.domain.model.TimeWindow.AllTime]/
+     * [com.leaderboardkit.domain.model.TimeWindow.Season]/[com.leaderboardkit.domain.model.TimeWindow.Custom],
+     * which don't reset on a periodic boundary. Pairs with [formatResetCountdown]
+     * for a ticking "resets in ..." label.
+     */
+    fun timeUntilNextReset(config: LeaderboardConfig, now: Instant = Clock.System.now()): Duration? =
+        config.timeWindow.timeUntilNextReset(now)
 }
+
+/** Formats [duration] (e.g. from [LeaderboardClient.timeUntilNextReset]) as `"1d 02h 03m 04s"` for a ticking countdown label. */
+fun formatResetCountdown(duration: Duration): String = formatCountdown(duration)
 
 /**
  * Builds a [LeaderboardClient] for [config] — selects the Firebase app

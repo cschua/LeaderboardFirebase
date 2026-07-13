@@ -40,7 +40,8 @@ internal object TimeWindowBucket {
         is TimeWindow.Custom -> "custom-${timeWindow.range.start.epochSeconds}-${timeWindow.range.endInclusive.epochSeconds}"
     }
 
-    private fun dateIn(zone: TimeZone, now: Instant): LocalDate = now.toLocalDateTime(zone).date
+    /** Visible within `:leaderboard:data` (not `private`) so [timeUntilNextReset] can reuse it without re-deriving the same one-liner. */
+    fun dateIn(zone: TimeZone, now: Instant): LocalDate = now.toLocalDateTime(zone).date
 
     /**
      * Deliberately avoids `LocalDate.dayOfWeek` — on Android that property returns
