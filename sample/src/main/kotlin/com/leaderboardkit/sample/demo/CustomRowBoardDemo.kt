@@ -16,10 +16,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.leaderboardkit.LeaderboardKit
+import com.leaderboardkit.LocalLeaderboardClient
 import com.leaderboardkit.sample.SampleUser
 import com.leaderboardkit.sample.ui.DemoScaffold
 import com.leaderboardkit.sample.ui.randomDemoScore
+import com.leaderboardkit.LeaderboardScreen
 import kotlinx.coroutines.launch
 
 /**
@@ -35,7 +36,10 @@ import kotlinx.coroutines.launch
  */
 @Composable
 fun CustomRowBoardDemo(onBack: () -> Unit) {
-    val config = remember { LeaderboardKit.buildConfig("global_alltime") }
+    val client = requireNotNull(LocalLeaderboardClient.current) {
+        "CustomRowBoardDemo must be composed under ProvideLeaderboardClient."
+    }
+    val config = remember(client) { client.buildConfig("global_alltime") }
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
 
@@ -45,12 +49,12 @@ fun CustomRowBoardDemo(onBack: () -> Unit) {
         snackbarHostState = snackbarHostState,
         onSubmitRandomScore = {
             coroutineScope.launch {
-                LeaderboardKit.submitScore(config, randomDemoScore(), SampleUser.PROFILE_METADATA)
+                client.submitScore(config, randomDemoScore(), SampleUser.PROFILE_METADATA)
                     .onFailure { snackbarHostState.showSnackbar(it.message ?: "Submission failed") }
             }
         },
     ) { modifier ->
-        LeaderboardKit.screen(
+        LeaderboardScreen(
             config = config,
             modifier = modifier,
             onShowError = { message -> coroutineScope.launch { snackbarHostState.showSnackbar(message) } },

@@ -3,26 +3,33 @@ package com.leaderboardkit.sample
 import android.app.Application
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
-import com.leaderboardkit.LeaderboardKit
+import com.leaderboardkit.LeaderboardClient
 import com.leaderboardkit.LeaderboardKitConfig
+import com.leaderboardkit.createLeaderboardClient
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.tasks.await
 
 /**
  * The entire library setup, per the README's "under 20 lines" claim: one
- * [LeaderboardKit.initialize] call in [onCreate], nothing else. Every demo
- * screen after this point only ever calls [LeaderboardKit.screen]/[LeaderboardKit.submitScore].
+ * [createLeaderboardClient] call in [onCreate], nothing else. [MainActivity][com.leaderboardkit.sample.MainActivity]
+ * scopes the resulting [leaderboardClient] to the whole app via
+ * `ProvideLeaderboardClient`, and every demo screen after that only ever calls
+ * `screen`/`client.submitScore`.
  *
  * A real app also needs a `google-services.json` in this module for
- * [LeaderboardKit.initialize]'s Firebase calls to reach an actual project —
- * see the README's setup section. Without one, the demos still build and
- * render (loading/error states), they just won't reach a live board.
+ * [createLeaderboardClient]'s Firebase calls to reach an actual project — see
+ * the README's setup section. Without one, the demos still build and render
+ * (loading/error states), they just won't reach a live board.
  */
 class SampleApplication : Application() {
+
+    lateinit var leaderboardClient: LeaderboardClient
+        private set
+
     override fun onCreate() {
         super.onCreate()
         ensureSignedIn()
-        LeaderboardKit.initialize(
+        leaderboardClient = createLeaderboardClient(
             context = this,
             config = LeaderboardKitConfig(
                 currentUserId = { SampleUser.ID },

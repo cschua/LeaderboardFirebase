@@ -33,8 +33,11 @@ import com.leaderboardkit.ui.theme.rememberLeaderboardTheme
  * destination) shares a single ViewModel/upstream subscription rather than each
  * standing up its own.
  *
- * [dependencies] stands in for the DI facade this stage doesn't build yet — see
- * [LeaderboardDependencies] KDoc.
+ * Takes [dependencies]/[currentUserId] directly rather than reaching for any
+ * global — `:leaderboard:public-api`'s scoped `LeaderboardClient` /
+ * `ProvideLeaderboardClient` is what resolves those two from a
+ * `LeaderboardKitConfig` for host apps; this module stays usable without it
+ * (see [LeaderboardDependencies] KDoc).
  *
  * Nothing below this composable ever touches [LeaderboardViewModel] directly: it
  * is read into a plain [com.leaderboardkit.presentation.LeaderboardState] here and
@@ -42,11 +45,11 @@ import com.leaderboardkit.ui.theme.rememberLeaderboardTheme
  */
 @Composable
 fun LeaderboardScreen(
+    modifier: Modifier = Modifier,
     config: LeaderboardConfig,
     currentUserId: String,
     dependencies: LeaderboardDependencies,
     theme: LeaderboardTheme = rememberLeaderboardTheme(),
-    modifier: Modifier = Modifier,
     rowContent: (@Composable (entry: LeaderboardEntry, isCurrentUser: Boolean) -> Unit)? = null,
     emptyStateContent: @Composable () -> Unit = { DefaultEmptyLeaderboardState() },
     errorStateContent: @Composable (LeaderboardError, onRetry: () -> Unit) -> Unit =

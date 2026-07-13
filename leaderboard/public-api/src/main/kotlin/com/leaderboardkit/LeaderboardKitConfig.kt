@@ -6,7 +6,7 @@ import com.leaderboardkit.ui.avatar.DefaultAvatarResolver
 import com.leaderboardkit.ui.theme.LeaderboardTheme
 
 /**
- * One-time [LeaderboardKit.initialize] input. This is the only configuration
+ * One-time [createLeaderboardClient] input. This is the only configuration
  * object most host apps construct by hand — everything below `:leaderboard:ui`
  * (repositories, mappers, the ViewModel) is wired up internally from it.
  *
@@ -18,15 +18,15 @@ import com.leaderboardkit.ui.theme.LeaderboardTheme
  * @param currentUserId Called every time the library needs to know "who is the
  *   current player" (row highlighting, score submission, rank lookups). A
  *   lambda rather than a fixed `String` because the signed-in user can change
- *   after `initialize()` runs (e.g. sign-out/sign-in) — this library has no
- *   concept of auth state itself, it only ever asks the host for the current
- *   value.
- * @param defaultScope Used by [LeaderboardKit.buildConfig] to pre-fill
+ *   after [createLeaderboardClient] runs (e.g. sign-out/sign-in) — this library
+ *   has no concept of auth state itself, it only ever asks the host for the
+ *   current value.
+ * @param defaultScope Used by [LeaderboardClient.buildConfig] to pre-fill
  *   [LeaderboardScope] so most boards don't need to repeat it.
  * @param defaultTheme A fully-resolved [LeaderboardTheme] to use whenever
- *   [LeaderboardKit.screen]/[LeaderboardKit.widget] aren't given one explicitly,
- *   for apps that want one consistent look everywhere without passing a theme at
- *   every call site. Leave `null` (the common case) to fall back to
+ *   [LeaderboardScreen]/[LeaderboardWidget] aren't given one explicitly, for apps that want one
+ *   consistent look everywhere without passing a theme at every call site.
+ *   Leave `null` (the common case) to fall back to
  *   `rememberLeaderboardTheme()`'s Material3-derived defaults at each call site.
  * @param avatarResolver How `avatarId`s resolve to drawables — override only if
  *   your app ships its own avatar art instead of the bundled placeholder set.

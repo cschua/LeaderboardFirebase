@@ -9,12 +9,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.leaderboardkit.LeaderboardKit
+import com.leaderboardkit.LocalLeaderboardClient
 import com.leaderboardkit.domain.model.TimeWindow
 import com.leaderboardkit.sample.SampleUser
 import com.leaderboardkit.sample.ui.DemoScaffold
 import com.leaderboardkit.sample.ui.ResetCountdown
 import com.leaderboardkit.sample.ui.randomDemoScore
+import com.leaderboardkit.LeaderboardScreen
 import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
 
@@ -27,8 +28,11 @@ import kotlinx.datetime.TimeZone
  */
 @Composable
 fun WeeklyBoardDemo(onBack: () -> Unit) {
-    val config = remember {
-        LeaderboardKit.buildConfig("weekly_demo") {
+    val client = requireNotNull(LocalLeaderboardClient.current) {
+        "WeeklyBoardDemo must be composed under ProvideLeaderboardClient."
+    }
+    val config = remember(client) {
+        client.buildConfig("weekly_demo") {
             timeWindow = TimeWindow.Weekly(resetTimeZone = TimeZone.UTC)
         }
     }
@@ -41,14 +45,14 @@ fun WeeklyBoardDemo(onBack: () -> Unit) {
         snackbarHostState = snackbarHostState,
         onSubmitRandomScore = {
             coroutineScope.launch {
-                LeaderboardKit.submitScore(config, randomDemoScore(), SampleUser.PROFILE_METADATA)
+                client.submitScore(config, randomDemoScore(), SampleUser.PROFILE_METADATA)
                     .onFailure { snackbarHostState.showSnackbar(it.message ?: "Submission failed") }
             }
         },
     ) { modifier ->
         Column(modifier = modifier.fillMaxSize()) {
             ResetCountdown(modifier = Modifier.padding(16.dp))
-            LeaderboardKit.screen(
+            LeaderboardScreen(
                 config = config,
                 modifier = Modifier.weight(1f),
                 onShowError = { message -> coroutineScope.launch { snackbarHostState.showSnackbar(message) } },

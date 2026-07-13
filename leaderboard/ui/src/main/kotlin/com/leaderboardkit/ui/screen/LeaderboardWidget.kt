@@ -41,11 +41,11 @@ import com.leaderboardkit.ui.theme.rememberLeaderboardTheme
  */
 @Composable
 fun LeaderboardWidget(
+    modifier: Modifier = Modifier,
     config: LeaderboardConfig,
     currentUserId: String,
     dependencies: LeaderboardDependencies,
     theme: LeaderboardTheme = rememberLeaderboardTheme(),
-    modifier: Modifier = Modifier,
     topCount: Int = 5,
     avatarResolver: AvatarResolver = DefaultAvatarResolver,
     onSeeAllClick: (() -> Unit)? = null,

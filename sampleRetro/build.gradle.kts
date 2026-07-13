@@ -40,7 +40,7 @@ dependencies {
     // wires :leaderboard:data/domain/presentation/ui directly — the facade's
     // documented "advanced usage" opt-out — so the app owns its own composition
     // root (RetroApplication) and drives LeaderboardViewModel's MVI contract
-    // (state/intent/effect) itself instead of going through LeaderboardKit.screen.
+    // (state/intent/effect) itself instead of going through the public-api facade's screen().
     implementation(project(":leaderboard:domain"))
     implementation(project(":leaderboard:data"))
     implementation(project(":leaderboard:presentation"))

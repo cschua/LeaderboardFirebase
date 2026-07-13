@@ -4,11 +4,12 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import com.leaderboardkit.LeaderboardKit
+import com.leaderboardkit.LocalLeaderboardClient
 import com.leaderboardkit.domain.model.TimeWindow
 import com.leaderboardkit.sample.SampleUser
 import com.leaderboardkit.sample.ui.DemoScaffold
 import com.leaderboardkit.sample.ui.randomDemoScore
+import com.leaderboardkit.LeaderboardScreen
 import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
 
@@ -21,8 +22,11 @@ import kotlinx.datetime.TimeZone
  */
 @Composable
 fun MonthlyBoardDemo(onBack: () -> Unit) {
-    val config = remember {
-        LeaderboardKit.buildConfig("monthly_demo") {
+    val client = requireNotNull(LocalLeaderboardClient.current) {
+        "MonthlyBoardDemo must be composed under ProvideLeaderboardClient."
+    }
+    val config = remember(client) {
+        client.buildConfig("monthly_demo") {
             timeWindow = TimeWindow.Monthly(resetTimeZone = TimeZone.UTC)
         }
     }
@@ -35,12 +39,12 @@ fun MonthlyBoardDemo(onBack: () -> Unit) {
         snackbarHostState = snackbarHostState,
         onSubmitRandomScore = {
             coroutineScope.launch {
-                LeaderboardKit.submitScore(config, randomDemoScore(), SampleUser.PROFILE_METADATA)
+                client.submitScore(config, randomDemoScore(), SampleUser.PROFILE_METADATA)
                     .onFailure { snackbarHostState.showSnackbar(it.message ?: "Submission failed") }
             }
         },
     ) { modifier ->
-        LeaderboardKit.screen(
+        LeaderboardScreen(
             config = config,
             modifier = modifier,
             onShowError = { message -> coroutineScope.launch { snackbarHostState.showSnackbar(message) } },

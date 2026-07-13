@@ -10,12 +10,12 @@ import com.leaderboardkit.domain.usecase.SubmitScoreUseCase
  * The Stage-1 use cases [LeaderboardViewModel] needs, bundled so callers don't
  * have to pass four constructor parameters individually.
  *
- * This stands in for proper DI wiring: `:leaderboard:ui`'s facade for obtaining a
- * fully Hilt-injected [LeaderboardViewModel] (so a host app never constructs this
- * by hand) is out of scope for this stage and lands with the public-api facade.
- * Until then, callers (including previews) build one directly from use cases
- * backed by whichever [com.leaderboardkit.domain.repository.LeaderboardRepository]
- * they've wired up.
+ * Most host apps never construct this directly: `:leaderboard:public-api`'s
+ * `createLeaderboardClient` builds one from a `LeaderboardKitConfig` and holds it
+ * behind its `LeaderboardClient`. Callers that skip that facade — advanced
+ * integrations, previews, tests — build one directly from use cases backed by
+ * whichever [com.leaderboardkit.domain.repository.LeaderboardRepository] they've
+ * wired up.
  */
 @InternalLeaderboardKitApi
 data class LeaderboardDependencies(

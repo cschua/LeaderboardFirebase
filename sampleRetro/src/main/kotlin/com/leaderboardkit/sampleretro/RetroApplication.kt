@@ -25,7 +25,7 @@ import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * This sample's composition root — where [SampleApplication][com.leaderboardkit.sample.SampleApplication]
- * makes one `LeaderboardKit.initialize` call and lets the `:leaderboard:public-api`
+ * makes one `createLeaderboardClient` call and lets the `:leaderboard:public-api`
  * facade wire everything behind it, this app builds the same
  * `:leaderboard:data` → `:leaderboard:domain` use-case → [LeaderboardDependencies]
  * chain itself. That's the whole point of `sampleRetro`: demonstrate the Clean

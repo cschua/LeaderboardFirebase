@@ -4,10 +4,11 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import com.leaderboardkit.LeaderboardKit
+import com.leaderboardkit.LocalLeaderboardClient
 import com.leaderboardkit.sample.SampleUser
 import com.leaderboardkit.sample.ui.DemoScaffold
 import com.leaderboardkit.sample.ui.randomDemoScore
+import com.leaderboardkit.LeaderboardScreen
 import kotlinx.coroutines.launch
 
 /**
@@ -18,7 +19,10 @@ import kotlinx.coroutines.launch
  */
 @Composable
 fun GlobalBoardDemo(onBack: () -> Unit) {
-    val config = remember { LeaderboardKit.buildConfig("global_alltime") }
+    val client = requireNotNull(LocalLeaderboardClient.current) {
+        "GlobalBoardDemo must be composed under ProvideLeaderboardClient."
+    }
+    val config = remember(client) { client.buildConfig("global_alltime") }
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
@@ -28,12 +32,12 @@ fun GlobalBoardDemo(onBack: () -> Unit) {
         snackbarHostState = snackbarHostState,
         onSubmitRandomScore = {
             scope.launch {
-                LeaderboardKit.submitScore(config, randomDemoScore(), SampleUser.PROFILE_METADATA)
+                client.submitScore(config, randomDemoScore(), SampleUser.PROFILE_METADATA)
                     .onFailure { snackbarHostState.showSnackbar(it.message ?: "Submission failed") }
             }
         },
     ) { modifier ->
-        LeaderboardKit.screen(
+        LeaderboardScreen(
             config = config,
             modifier = modifier,
             onShowError = { message -> scope.launch { snackbarHostState.showSnackbar(message) } },

@@ -60,7 +60,7 @@ import kotlin.random.Random
  * `:leaderboard:presentation` ([LeaderboardViewModel.state]/[LeaderboardViewModel.onIntent]/
  * [LeaderboardViewModel.effects]) and rendered through `:leaderboard:ui`'s stateless
  * [LeaderboardContent] — the same "reach for the MVI contract directly" path
- * `:leaderboard:public-api`'s `LeaderboardKit.screen` opts out of by default (see
+ * `:leaderboard:public-api`'s `screen` opts out of by default (see
  * its KDoc). Tab selection dispatches [LeaderboardIntent.ChangeTimeWindow] against
  * the one [RetroTab.buildConfig]'d [LeaderboardViewModel] rather than mounting
  * three separate screens: a single board with three windows is exactly the

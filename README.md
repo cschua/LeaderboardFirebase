@@ -6,13 +6,22 @@ presentation layer, Clean Architecture module boundaries.
 
 ```kotlin
 // Application.onCreate()
-LeaderboardKit.initialize(
+val leaderboardClient = createLeaderboardClient(
     context = this,
     config = LeaderboardKitConfig(currentUserId = { currentUserId() }),
 )
 
-// anywhere in a Composable
-LeaderboardKit.screen(config = LeaderboardKit.buildConfig("global_alltime"))
+// once, near the composition root
+ProvideLeaderboardClient(leaderboardClient) {
+    GameOverScreen()
+}
+
+// anywhere below that in the composition
+@Composable
+fun GameOverScreen() {
+    val client = LocalLeaderboardClient.current!!
+    screen(config = client.buildConfig("global_alltime"))
+}
 ```
 
 ## Module graph
@@ -22,20 +31,21 @@ LeaderboardKit.screen(config = LeaderboardKit.buildConfig("global_alltime"))
 :leaderboard:data          Firestore/Realtime Database repositories, mappers, Hilt modules
 :leaderboard:presentation  MVI contract + LeaderboardViewModel
 :leaderboard:ui            Compose screens, theme, row composables
-:leaderboard:public-api    LeaderboardKit facade — the supported integration surface
+:leaderboard:public-api    LeaderboardClient facade — the supported integration surface
 :sample                    demo app exercising the facade only
 :sampleRetro               demo app bypassing the facade — see Advanced usage
 ```
 
-`:leaderboard:public-api` only ever depends on the four lower modules and exposes `LeaderboardKit` +
-`LeaderboardKitConfig`. The lower modules stay independently usable (and stay public, not `internal`)
+`:leaderboard:public-api` only ever depends on the four lower modules and exposes `LeaderboardClient` +
+`LeaderboardKitConfig` (plus the `createLeaderboardClient`/`ProvideLeaderboardClient`/`screen`/`widget`
+functions around them). The lower modules stay independently usable (and stay public, not `internal`)
 for advanced integration — see [Advanced usage](#advanced-usage) — but `:leaderboard:public-api` is
 the documented, supported entry point.
 
-`:sample` only ever calls `LeaderboardKit.initialize`/`.screen`/`.widget` — the facade — and never
-needs the opt-in described below. `:sampleRetro` is the one app in this repo that deliberately does
-not use the facade: it constructs `FirestoreLeaderboardRepository` and drives `LeaderboardViewModel`
-directly, exercising the advanced-usage path end to end.
+`:sample` only ever calls `createLeaderboardClient`/`ProvideLeaderboardClient`/`screen`/`widget` — the
+facade — and never needs the opt-in described below. `:sampleRetro` is the one app in this repo that
+deliberately does not use the facade: it constructs `FirestoreLeaderboardRepository` and drives
+`LeaderboardViewModel` directly, exercising the advanced-usage path end to end.
 
 ## Setup
 
@@ -99,18 +109,28 @@ account.
 
 ```kotlin
 class MyApplication : Application() {
+
+    lateinit var leaderboardClient: LeaderboardClient
+        private set
+
     override fun onCreate() {
         super.onCreate()
-        LeaderboardKit.initialize(
+        leaderboardClient = createLeaderboardClient(
             context = this,
             config = LeaderboardKitConfig(currentUserId = { AuthRepository.currentUserId }),
         )
     }
 }
 
+// wrap your composition root once, e.g. in your Activity's setContent { }
+ProvideLeaderboardClient((application as MyApplication).leaderboardClient) {
+    // ...
+}
+
 @Composable
 fun GameOverScreen() {
-    LeaderboardKit.screen(config = LeaderboardKit.buildConfig("global_alltime"))
+    val client = LocalLeaderboardClient.current!!
+    screen(config = client.buildConfig("global_alltime"))
 }
 ```
 
@@ -120,7 +140,7 @@ That's the whole integration for a single global board. See `:sample` for five m
 ## Configuration reference
 
 Every leaderboard "shape" is one `LeaderboardConfig`, built via the `leaderboardConfig { }` DSL
-(or `LeaderboardKit.buildConfig(boardId) { }`, which pre-fills `scope` from
+(or `leaderboardClient.buildConfig(boardId) { }`, which pre-fills `scope` from
 `LeaderboardKitConfig.defaultScope`):
 
 ```kotlin
@@ -196,7 +216,7 @@ avatars are a fixed, locally-bundled set). `DefaultAvatarResolver` ships 12 plac
 to use your own art.
 
 For a row layout unlike anything `LeaderboardTheme` can express, skip theming it and pass
-`rowContent` to `LeaderboardKit.screen(...)` instead — a full `@Composable (LeaderboardEntry,
+`rowContent` to `screen(...)` instead — a full `@Composable (LeaderboardEntry,
 isCurrentUser: Boolean) -> Unit` override, see `:sample`'s "custom row content" demo.
 
 ## Advanced usage
@@ -213,7 +233,7 @@ refuse to let you reference it until you add `@OptIn(InternalLeaderboardKitApi::
 `:sampleRetro` for a full worked example of what that opt-in looks like in practice.
 
 - **Swap Firestore for the Realtime Database reference adapter**, or supply your own
-  `LeaderboardRepository` — `LeaderboardKit` only ever wires up Firestore. Bind your own repository
+  `LeaderboardRepository` — `createLeaderboardClient` only ever wires up Firestore. Bind your own repository
   via one `@Binds` line in a Hilt module installed alongside `:leaderboard:data`'s (see
   `LeaderboardDataModule` KDoc for the exact snippet), then build your own `LeaderboardViewModel`
   from `:leaderboard:presentation`'s use cases instead of going through the facade.
@@ -254,6 +274,6 @@ pagination/rank-computation/security-rules behavior against a real (local) Fires
 - **Server-side anti-cheat / score validation** — only the documented extension point
   (`CloudFunctionScoreSubmitter`'s client contract) exists; no Cloud Function is implemented.
 - **Realtime Database beyond the reference adapter** — `RealtimeDbLeaderboardRepository` exists and
-  is tested at the mapper/path-strategy level, but `LeaderboardKit` never wires it up; Firestore is
-  the only backend the facade supports.
+  is tested at the mapper/path-strategy level, but `createLeaderboardClient` never wires it up;
+  Firestore is the only backend the facade supports.
 - **Push notifications for rank changes** — plausible v2 feature, not built.
