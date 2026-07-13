@@ -25,6 +25,7 @@ import com.leaderboardkit.domain.model.leaderboardConfig
 import com.leaderboardkit.presentation.LeaderboardDependencies
 import com.leaderboardkit.presentation.LeaderboardState
 import com.leaderboardkit.presentation.LeaderboardViewModel
+import com.leaderboardkit.presentation.selectWidgetEntries
 import com.leaderboardkit.ui.avatar.AvatarResolver
 import com.leaderboardkit.ui.avatar.DefaultAvatarResolver
 import com.leaderboardkit.ui.component.LeaderboardRow
@@ -80,8 +81,7 @@ fun LeaderboardWidgetContent(
     avatarResolver: AvatarResolver = DefaultAvatarResolver,
     onSeeAllClick: (() -> Unit)? = null,
 ) {
-    val top = state.entries.take(topCount)
-    val pinnedEntry = state.currentUserEntry?.takeIf { top.none { entry -> entry.userId == currentUserId } }
+    val (top, pinnedEntry) = state.selectWidgetEntries(currentUserId, topCount)
 
     Card(modifier = modifier.fillMaxWidth()) {
         Column {
