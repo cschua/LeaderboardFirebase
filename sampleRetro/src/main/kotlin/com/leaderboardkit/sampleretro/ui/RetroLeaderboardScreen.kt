@@ -28,7 +28,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -51,8 +50,6 @@ import com.leaderboardkit.sampleretro.ui.theme.RetroMonoFont
 import com.leaderboardkit.sampleretro.ui.theme.RetroSurface
 import com.leaderboardkit.sampleretro.ui.theme.rememberRetroLeaderboardTheme
 import com.leaderboardkit.ui.screen.LeaderboardContent
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import kotlin.random.Random
 
 /**
@@ -80,7 +77,6 @@ fun RetroLeaderboardScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val listState = rememberLazyListState()
     val snackbarHostState = remember { SnackbarHostState() }
-    val coroutineScope = rememberCoroutineScope()
     val theme = rememberRetroLeaderboardTheme()
 
     LaunchedEffect(viewModel) {
@@ -126,10 +122,13 @@ fun RetroLeaderboardScreen(
         floatingActionButton = {
             ExtendedFloatingActionButton(
                 onClick = {
-                    coroutineScope.launch {
-                        submitScoreToAllWindows(dependencies, currentUserId, randomRetroScore())
-                            .onFailure { snackbarHostState.showSnackbar(it.message ?: "SUBMISSION FAILED") }
-                    }
+                    viewModel.onIntent(
+                        LeaderboardIntent.SubmitScoreToWindows(
+                            score = randomRetroScore(),
+                            configs = RetroTab.entries.map { it.buildConfig() },
+                            metadata = RetroUser.PROFILE_METADATA,
+                        ),
+                    )
                 },
                 containerColor = RetroGreen,
                 contentColor = Color.Black,
@@ -180,27 +179,3 @@ private fun RetroTabRow(selectedTab: RetroTab, onTabSelected: (RetroTab) -> Unit
 }
 
 private fun randomRetroScore(): Long = Random.nextLong(100, 10_000)
-
-/**
- * One "INSERT COIN" tap writes [score] into all three [RetroTab] window buckets —
- * [com.leaderboardkit.data.firestore.DefaultFirestorePathStrategy] gives every
- * [com.leaderboardkit.domain.model.TimeWindow] its own Firestore collection, so a
- * single [LeaderboardDependencies.submitScore] call only ever lands in whichever
- * one [com.leaderboardkit.domain.model.LeaderboardConfig.timeWindow] names. Fanning out here keeps the score
- * consistent no matter which tab the player checks afterward, rather than only
- * wherever they happened to be looking when they submitted. The 300ms stagger
- * clears [com.leaderboardkit.data.ratelimit.ClientRateLimiter]'s per-`(userId, boardId)`
- * cooldown between writes — see `RetroApplication`'s rate limiter wiring.
- */
-private suspend fun submitScoreToAllWindows(
-    dependencies: LeaderboardDependencies,
-    userId: String,
-    score: Long,
-): Result<Unit> {
-    for (tab in RetroTab.entries) {
-        val result = dependencies.submitScore(userId, score, tab.buildConfig(), RetroUser.PROFILE_METADATA)
-        if (result.isFailure) return result
-        delay(300)
-    }
-    return Result.success(Unit)
-}

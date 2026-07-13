@@ -4,6 +4,7 @@ import com.leaderboardkit.domain.annotations.InternalLeaderboardKitApi
 import com.leaderboardkit.domain.usecase.GetNearbyRanksUseCase
 import com.leaderboardkit.domain.usecase.LoadMoreUseCase
 import com.leaderboardkit.domain.usecase.ObserveLeaderboardUseCase
+import com.leaderboardkit.domain.usecase.SubmitScoreToWindowsUseCase
 import com.leaderboardkit.domain.usecase.SubmitScoreUseCase
 
 /**
@@ -23,4 +24,5 @@ data class LeaderboardDependencies(
     val loadMore: LoadMoreUseCase,
     val submitScore: SubmitScoreUseCase,
     val getNearbyRanks: GetNearbyRanksUseCase,
+    val submitScoreToWindows: SubmitScoreToWindowsUseCase = SubmitScoreToWindowsUseCase(submitScore),
 )

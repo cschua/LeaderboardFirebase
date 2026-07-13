@@ -123,6 +123,7 @@ class LeaderboardViewModel(
             is LeaderboardIntent.ChangeTimeWindow -> changeConfig(_state.value.config.copy(timeWindow = intent.window))
             is LeaderboardIntent.ChangeScope -> changeConfig(_state.value.config.copy(scope = intent.scope))
             is LeaderboardIntent.SubmitScore -> submitScore(intent.score)
+            is LeaderboardIntent.SubmitScoreToWindows -> submitScoreToWindows(intent.score, intent.configs, intent.metadata)
         }
     }
 
@@ -159,6 +160,17 @@ class LeaderboardViewModel(
                     // snapshot on a [com.leaderboardkit.domain.model.RefreshStrategy.Polling]/
                     // [com.leaderboardkit.domain.model.RefreshStrategy.ManualOnly] board, so
                     // trusting them would show a stale score/rank until the next tick.
+                    resolveCurrentUserEntry()
+                }
+                .onFailure { throwable -> dispatchFailure(throwable) }
+        }
+    }
+
+    private fun submitScoreToWindows(score: Long, configs: List<LeaderboardConfig>, metadata: Map<String, Any>) {
+        viewModelScope.launch {
+            dependencies.submitScoreToWindows(currentUserId, score, configs, metadata)
+                .onSuccess {
+                    _effects.trySend(LeaderboardEffect.ScrollToUserRank)
                     resolveCurrentUserEntry()
                 }
                 .onFailure { throwable -> dispatchFailure(throwable) }

@@ -60,6 +60,15 @@ class LeaderboardViewModelTest {
             if (config.scope == failingScope) flow { throw IllegalStateException("boom") } else delegate.observeEntries(config)
     }
 
+    /** Delegates everything to [delegate] except [submitScore], which fails for [failingBoardId]. */
+    private class SubmitFailingRepository(
+        private val delegate: LeaderboardRepository,
+        private val failingBoardId: String,
+    ) : LeaderboardRepository by delegate {
+        override suspend fun submitScore(userId: String, score: Long, config: LeaderboardConfig, metadata: Map<String, Any>): Result<Unit> =
+            if (config.boardId == failingBoardId) Result.failure(RuntimeException("boom")) else delegate.submitScore(userId, score, config, metadata)
+    }
+
     private fun viewModel(repository: LeaderboardRepository, currentUserId: String = "me") = LeaderboardViewModel(
         initialConfig = leaderboardConfig("board") { pageSize = 5 },
         currentUserId = currentUserId,
@@ -128,6 +137,33 @@ class LeaderboardViewModelTest {
         vm.effects.test {
             vm.onIntent(LeaderboardIntent.SubmitScore(999L))
             assertThat(awaitItem()).isEqualTo(LeaderboardEffect.ScrollToUserRank)
+        }
+    }
+
+    @Test
+    fun `SubmitScoreToWindows success submits to every config and emits ScrollToUserRank`() = runTest {
+        val repository = FakeLeaderboardRepository(listOf(entry("me", 10)))
+        val vm = viewModel(repository, currentUserId = "me")
+        val configs = listOf(
+            leaderboardConfig("board") { pageSize = 5 },
+            leaderboardConfig("board") { pageSize = 10 },
+        )
+
+        vm.effects.test {
+            vm.onIntent(LeaderboardIntent.SubmitScoreToWindows(999L, configs))
+            assertThat(awaitItem()).isEqualTo(LeaderboardEffect.ScrollToUserRank)
+        }
+    }
+
+    @Test
+    fun `SubmitScoreToWindows failure dispatches ShowError instead of ScrollToUserRank`() = runTest {
+        val repository = SubmitFailingRepository(FakeLeaderboardRepository(listOf(entry("me", 10))), failingBoardId = "bad_board")
+        val vm = viewModel(repository, currentUserId = "me")
+        val configs = listOf(leaderboardConfig("bad_board") {})
+
+        vm.effects.test {
+            vm.onIntent(LeaderboardIntent.SubmitScoreToWindows(999L, configs))
+            assertThat(awaitItem()).isInstanceOf(LeaderboardEffect.ShowError::class.java)
         }
     }
 
