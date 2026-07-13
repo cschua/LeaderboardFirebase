@@ -6,6 +6,9 @@ import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.Query
 import com.google.firebase.database.ValueEventListener
 import com.leaderboardkit.data.common.AvatarDefaults
+import com.leaderboardkit.data.common.assignRanks
+import com.leaderboardkit.data.common.rankFromAscendingIndex
+import com.leaderboardkit.data.common.surroundingWindow
 import com.leaderboardkit.domain.annotations.InternalLeaderboardKitApi
 import com.leaderboardkit.domain.model.LeaderboardConfig
 import com.leaderboardkit.domain.model.LeaderboardEntry
@@ -66,9 +69,6 @@ class RealtimeDbLeaderboardRepository(
         rawAscendingChildren.map { child ->
             mapper.fromNode(child.key.orEmpty(), (child.value as? Map<String, Any?>).orEmpty())
         }
-
-    private fun assignRanks(entries: List<LeaderboardEntry>, startRank: Int): List<LeaderboardEntry> =
-        entries.mapIndexed { index, entry -> entry.copy(rank = startRank + index) }
 
     /** Fetches one page, ordered for display (best rank first) regardless of [SortDirection]. */
     private suspend fun fetchPage(config: LeaderboardConfig, after: Cursor?): Pair<List<LeaderboardEntry>, Cursor?> {
@@ -193,10 +193,7 @@ class RealtimeDbLeaderboardRepository(
         val all = fetchAllOrderedAscending(config)
         val index = all.indexOfFirst { it.key == userId }
         if (index < 0) return@runCatching null
-        when (config.sortDirection) {
-            SortDirection.Ascending -> index + 1
-            SortDirection.Descending -> all.size - index
-        }
+        rankFromAscendingIndex(index, all.size, config.sortDirection)
     }
 
     override suspend fun getSurroundingEntries(
@@ -208,11 +205,7 @@ class RealtimeDbLeaderboardRepository(
         val index = all.indexOfFirst { it.key == userId }
         if (index < 0) return@runCatching emptyList()
 
-        val display = if (config.sortDirection == SortDirection.Descending) all.asReversed() else all
-        val displayIndex = if (config.sortDirection == SortDirection.Descending) all.size - 1 - index else index
-
-        val from = (displayIndex - radius).coerceAtLeast(0)
-        val to = (displayIndex + radius).coerceAtMost(display.size - 1)
-        assignRanks(toEntries(display.subList(from, to + 1)), startRank = from + 1)
+        val window = surroundingWindow(all, index, radius, config.sortDirection)
+        assignRanks(toEntries(window.items), startRank = window.startRank)
     }
 }

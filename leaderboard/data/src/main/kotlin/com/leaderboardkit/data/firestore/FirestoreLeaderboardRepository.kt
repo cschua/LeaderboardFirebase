@@ -5,6 +5,8 @@ import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.Source
+import com.leaderboardkit.data.common.aboveWindowStartRank
+import com.leaderboardkit.data.common.assignRanks
 import com.leaderboardkit.domain.annotations.InternalLeaderboardKitApi
 import com.leaderboardkit.domain.model.LeaderboardConfig
 import com.leaderboardkit.domain.model.LeaderboardEntry
@@ -79,9 +81,6 @@ class FirestoreLeaderboardRepository(
         return firestore.collection(pathStrategy.collectionPath(config))
             .orderBy("score", direction)
     }
-
-    private fun assignRanks(entries: List<LeaderboardEntry>, startRank: Int): List<LeaderboardEntry> =
-        entries.mapIndexed { index, entry -> entry.copy(rank = startRank + index) }
 
     private suspend fun fetchFirstPage(config: LeaderboardConfig, source: Source = Source.DEFAULT): List<LeaderboardEntry> {
         val snapshot = baseQuery(config).limit(config.pageSize.toLong()).get(source).await()
@@ -211,7 +210,7 @@ class FirestoreLeaderboardRepository(
             .get().await()
         val above = assignRanks(
             aboveSnapshot.documents.map { mapper.fromDocument(it.id, it.data.orEmpty()) }.asReversed(),
-            startRank = (anchorRank - aboveSnapshot.documents.size).coerceAtLeast(1),
+            startRank = aboveWindowStartRank(anchorRank, aboveSnapshot.documents.size),
         )
 
         val belowSnapshot = collection
