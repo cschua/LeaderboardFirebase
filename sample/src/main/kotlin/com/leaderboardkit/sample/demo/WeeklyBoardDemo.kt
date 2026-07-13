@@ -14,7 +14,7 @@ import com.leaderboardkit.domain.model.TimeWindow
 import com.leaderboardkit.sample.SampleUser
 import com.leaderboardkit.sample.ui.DemoScaffold
 import com.leaderboardkit.sample.ui.ResetCountdown
-import com.leaderboardkit.sample.ui.randomDemoScore
+import com.leaderboardkit.sample.ui.rememberSubmitRandomScoreAction
 import com.leaderboardkit.LeaderboardScreen
 import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
@@ -43,12 +43,7 @@ fun WeeklyBoardDemo(onBack: () -> Unit) {
         title = "Weekly",
         onBack = onBack,
         snackbarHostState = snackbarHostState,
-        onSubmitRandomScore = {
-            coroutineScope.launch {
-                client.submitScore(config, randomDemoScore(), SampleUser.PROFILE_METADATA)
-                    .onFailure { snackbarHostState.showSnackbar(it.message ?: "Submission failed") }
-            }
-        },
+        onSubmitRandomScore = rememberSubmitRandomScoreAction(client, config, SampleUser.PROFILE_METADATA, snackbarHostState),
     ) { modifier ->
         Column(modifier = modifier.fillMaxSize()) {
             ResetCountdown(modifier = Modifier.padding(16.dp))

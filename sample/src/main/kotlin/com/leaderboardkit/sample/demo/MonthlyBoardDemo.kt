@@ -8,7 +8,7 @@ import com.leaderboardkit.LocalLeaderboardClient
 import com.leaderboardkit.domain.model.TimeWindow
 import com.leaderboardkit.sample.SampleUser
 import com.leaderboardkit.sample.ui.DemoScaffold
-import com.leaderboardkit.sample.ui.randomDemoScore
+import com.leaderboardkit.sample.ui.rememberSubmitRandomScoreAction
 import com.leaderboardkit.LeaderboardScreen
 import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
@@ -37,12 +37,7 @@ fun MonthlyBoardDemo(onBack: () -> Unit) {
         title = "Monthly",
         onBack = onBack,
         snackbarHostState = snackbarHostState,
-        onSubmitRandomScore = {
-            coroutineScope.launch {
-                client.submitScore(config, randomDemoScore(), SampleUser.PROFILE_METADATA)
-                    .onFailure { snackbarHostState.showSnackbar(it.message ?: "Submission failed") }
-            }
-        },
+        onSubmitRandomScore = rememberSubmitRandomScoreAction(client, config, SampleUser.PROFILE_METADATA, snackbarHostState),
     ) { modifier ->
         LeaderboardScreen(
             config = config,
