@@ -2,9 +2,8 @@ package com.leaderboardkit.domain.usecase
 
 import com.leaderboardkit.domain.model.LeaderboardConfig
 import com.leaderboardkit.domain.repository.LeaderboardRepository
-import javax.inject.Inject
 
-class SubmitScoreUseCase @Inject constructor(
+class SubmitScoreUseCase(
     private val repository: LeaderboardRepository,
 ) {
     suspend operator fun invoke(

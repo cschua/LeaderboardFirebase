@@ -4,9 +4,8 @@ import com.leaderboardkit.domain.model.LeaderboardConfig
 import com.leaderboardkit.domain.model.LeaderboardEntry
 import com.leaderboardkit.domain.repository.LeaderboardRepository
 import kotlinx.coroutines.flow.Flow
-import javax.inject.Inject
 
-class ObserveLeaderboardUseCase @Inject constructor(
+class ObserveLeaderboardUseCase(
     private val repository: LeaderboardRepository,
 ) {
     operator fun invoke(config: LeaderboardConfig): Flow<List<LeaderboardEntry>> =

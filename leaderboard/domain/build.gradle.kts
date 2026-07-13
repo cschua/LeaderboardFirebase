@@ -12,7 +12,6 @@ kotlin {
 dependencies {
     api(libs.kotlinx.coroutines.core)
     api(libs.kotlinx.datetime)
-    api(libs.javax.inject)
 
     testImplementation(libs.junit4)
     testImplementation(libs.kotlinx.coroutines.test)
@@ -25,11 +24,7 @@ kover {
         filters {
             excludes {
                 classes(
-                    "*Module*",
-                    "*Factory*",
-                    "*_HiltModules*",
-                    "*_Provide*",
-                    "*_MembersInjector*"
+                    "*Factory*"
                 )
             }
         }

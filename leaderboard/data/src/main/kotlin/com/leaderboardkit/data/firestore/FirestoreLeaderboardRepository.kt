@@ -20,7 +20,6 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.delay
 import java.util.concurrent.ConcurrentHashMap
-import javax.inject.Inject
 
 /**
  * [LeaderboardRepository] backed by Firestore. See [ScoreSubmitter] for the two
@@ -50,7 +49,7 @@ import javax.inject.Inject
  * per-board [Mutex] so concurrent calls are serialized rather than racing.
  */
 @InternalLeaderboardKitApi
-class FirestoreLeaderboardRepository @Inject constructor(
+class FirestoreLeaderboardRepository(
     private val firestore: FirebaseFirestore,
     private val pathStrategy: FirestorePathStrategy,
     private val mapper: FirestoreLeaderboardEntryMapper,

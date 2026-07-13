@@ -9,7 +9,6 @@ import com.leaderboardkit.domain.model.LeaderboardEntry
 import com.leaderboardkit.domain.model.LeaderboardException
 import com.leaderboardkit.domain.model.SortDirection
 import kotlinx.coroutines.tasks.await
-import javax.inject.Inject
 
 /**
  * [displayName]/`avatarId` are not parameters of [ScoreSubmitter.submit] — this
@@ -22,7 +21,7 @@ import javax.inject.Inject
  * map so they aren't duplicated with the top-level fields.
  */
 @InternalLeaderboardKitApi
-class DirectWriteScoreSubmitter @Inject constructor(
+class DirectWriteScoreSubmitter(
     private val firestore: FirebaseFirestore,
     private val pathStrategy: FirestorePathStrategy,
     private val mapper: FirestoreLeaderboardEntryMapper,

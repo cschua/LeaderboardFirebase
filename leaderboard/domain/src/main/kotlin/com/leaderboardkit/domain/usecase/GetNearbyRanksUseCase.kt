@@ -3,9 +3,8 @@ package com.leaderboardkit.domain.usecase
 import com.leaderboardkit.domain.model.LeaderboardConfig
 import com.leaderboardkit.domain.model.LeaderboardEntry
 import com.leaderboardkit.domain.repository.LeaderboardRepository
-import javax.inject.Inject
 
-class GetNearbyRanksUseCase @Inject constructor(
+class GetNearbyRanksUseCase(
     private val repository: LeaderboardRepository,
 ) {
     suspend operator fun invoke(

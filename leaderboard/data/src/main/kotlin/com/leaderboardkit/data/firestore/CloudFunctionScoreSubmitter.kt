@@ -4,8 +4,6 @@ import com.google.firebase.functions.FirebaseFunctions
 import com.leaderboardkit.domain.annotations.InternalLeaderboardKitApi
 import com.leaderboardkit.domain.model.LeaderboardConfig
 import kotlinx.coroutines.tasks.await
-import javax.inject.Inject
-import javax.inject.Named
 
 /**
  * Calls a callable Cloud Function (default name `"submitLeaderboardScore"`,
@@ -26,9 +24,9 @@ import javax.inject.Named
  * ```
  */
 @InternalLeaderboardKitApi
-class CloudFunctionScoreSubmitter @Inject constructor(
+class CloudFunctionScoreSubmitter(
     private val functions: FirebaseFunctions,
-    @Named("leaderboardSubmitFunctionName") private val functionName: String = "submitLeaderboardScore",
+    private val functionName: String = "submitLeaderboardScore",
 ) : ScoreSubmitter {
 
     override suspend fun submit(

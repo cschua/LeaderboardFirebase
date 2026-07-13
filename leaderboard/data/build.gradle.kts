@@ -2,8 +2,6 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     alias(libs.plugins.android.library)
-    alias(libs.plugins.ksp)
-    alias(libs.plugins.hilt.android)
     alias(libs.plugins.kotlinx.kover)
 }
 
@@ -45,9 +43,6 @@ dependencies {
     implementation(libs.kotlinx.coroutines.play.services)
     implementation(libs.androidx.core.ktx)
 
-    implementation(libs.hilt.android)
-    ksp(libs.hilt.compiler)
-
     testImplementation(libs.junit4)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.turbine)
@@ -60,9 +55,6 @@ kover {
         filters {
             excludes {
                 classes(
-                    "*Module*",
-                    "*Factory*",
-                    "*_HiltModules*",
                     "*.BuildConfig",
                     "*.R",
                     "*.R$*"

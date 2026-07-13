@@ -21,7 +21,6 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.tasks.await
 import java.util.concurrent.ConcurrentHashMap
-import javax.inject.Inject
 
 /**
  * [LeaderboardRepository] backed by Realtime Database, mirroring
@@ -36,7 +35,7 @@ import javax.inject.Inject
  * job and read it directly instead of computing it here.
  */
 @InternalLeaderboardKitApi
-class RealtimeDbLeaderboardRepository @Inject constructor(
+class RealtimeDbLeaderboardRepository(
     private val database: DatabaseReference,
     private val pathStrategy: RealtimeDbPathStrategy,
     private val mapper: RealtimeDbLeaderboardEntryMapper,

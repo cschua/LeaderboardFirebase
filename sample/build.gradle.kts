@@ -64,11 +64,7 @@ kover {
         filters {
             excludes {
                 classes(
-                    "*Module*",
                     "*Factory*",
-                    "*_HiltModules*",
-                    "*_Provide*",
-                    "*_MembersInjector*",
                     "*.BuildConfig",
                     "*.R",
                     "*.R$*"
