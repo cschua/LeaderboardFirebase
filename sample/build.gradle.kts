@@ -3,7 +3,6 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
-    alias(libs.plugins.kotlinx.kover)
     alias(libs.plugins.google.services)
 }
 
@@ -57,21 +56,4 @@ dependencies {
 
     debugImplementation(platform(libs.compose.bom))
     debugImplementation(libs.compose.ui.tooling)
-}
-
-kover {
-    reports {
-        filters {
-            excludes {
-                classes(
-                    "*Factory*",
-                    "*.BuildConfig",
-                    "*.R",
-                    "*.R$*",
-                    "*ComposableSingletons*"
-                )
-                annotatedBy("androidx.compose.runtime.Composable")
-            }
-        }
-    }
 }
