@@ -5,6 +5,7 @@ import kotlinx.datetime.TimeZone
 import org.junit.Test
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.Instant
 
 /**
  * Verifies [RefreshStrategyDefaults.recommendedFor] against the recommended-defaults
@@ -24,9 +25,21 @@ class RefreshStrategyDefaultsTest {
     fun `global boards with any other time window poll every 3 minutes`() {
         val weekly = RefreshStrategyDefaults.recommendedFor(LeaderboardScope.Global, TimeWindow.Weekly(TimeZone.UTC))
         val daily = RefreshStrategyDefaults.recommendedFor(LeaderboardScope.Global, TimeWindow.Daily(TimeZone.UTC))
+        val monthly = RefreshStrategyDefaults.recommendedFor(LeaderboardScope.Global, TimeWindow.Monthly(TimeZone.UTC))
+        val season = RefreshStrategyDefaults.recommendedFor(
+            LeaderboardScope.Global,
+            TimeWindow.Season("s1", Instant.parse("2026-01-01T00:00:00Z")..Instant.parse("2026-03-01T00:00:00Z"))
+        )
+        val custom = RefreshStrategyDefaults.recommendedFor(
+            LeaderboardScope.Global,
+            TimeWindow.Custom(Instant.parse("2026-01-01T00:00:00Z")..Instant.parse("2026-03-01T00:00:00Z"))
+        )
 
         assertThat(weekly).isEqualTo(RefreshStrategy.Polling(3.minutes))
         assertThat(daily).isEqualTo(RefreshStrategy.Polling(3.minutes))
+        assertThat(monthly).isEqualTo(RefreshStrategy.Polling(3.minutes))
+        assertThat(season).isEqualTo(RefreshStrategy.Polling(3.minutes))
+        assertThat(custom).isEqualTo(RefreshStrategy.Polling(3.minutes))
     }
 
     @Test

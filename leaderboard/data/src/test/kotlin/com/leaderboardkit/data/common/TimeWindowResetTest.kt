@@ -37,6 +37,15 @@ class TimeWindowResetTest {
     }
 
     @Test
+    fun `daily exactly at the reset instant, a full day remains`() {
+        val now = Instant.parse("2026-07-08T00:00:00Z")
+
+        val remaining = TimeWindow.Daily(TimeZone.UTC).timeUntilNextReset(now)
+
+        assertThat(remaining).isEqualTo(24.hours)
+    }
+
+    @Test
     fun `weekly midweek resolves to the following Monday 00_00 in the reset zone`() {
         // Wednesday 2026-07-08 12:00 UTC -> next reset is Monday 2026-07-13 00:00 UTC.
         val now = Instant.parse("2026-07-08T12:00:00Z")
@@ -92,6 +101,15 @@ class TimeWindowResetTest {
         val remaining = TimeWindow.Monthly(TimeZone.UTC).timeUntilNextReset(now)
 
         assertThat(remaining).isEqualTo(Instant.parse("2027-01-01T00:00:00Z") - now)
+    }
+
+    @Test
+    fun `monthly exactly at the reset instant, a full month remains`() {
+        val now = Instant.parse("2026-07-01T00:00:00Z")
+
+        val remaining = TimeWindow.Monthly(TimeZone.UTC).timeUntilNextReset(now)
+
+        assertThat(remaining).isEqualTo(Instant.parse("2026-08-01T00:00:00Z") - now)
     }
 
     @Test

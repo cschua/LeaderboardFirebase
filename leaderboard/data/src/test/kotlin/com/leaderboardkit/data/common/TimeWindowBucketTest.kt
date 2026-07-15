@@ -58,4 +58,15 @@ class TimeWindowBucketTest {
 
         assertThat(TimeWindowBucket.currentBucketId(season, thursdayNoonUtc)).isEqualTo("season-s1")
     }
+
+    @Test
+    fun `custom bucket is derived from the range boundaries`() {
+        val start = Instant.parse("2026-01-01T00:00:00Z")
+        val end = Instant.parse("2026-03-01T00:00:00Z")
+        val custom = TimeWindow.Custom(range = start..end)
+
+        val bucket = TimeWindowBucket.currentBucketId(custom, thursdayNoonUtc)
+
+        assertThat(bucket).isEqualTo("custom-${start.epochSeconds}-${end.epochSeconds}")
+    }
 }
