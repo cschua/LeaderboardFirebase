@@ -6,6 +6,7 @@ import com.leaderboardkit.domain.model.LeaderboardConfig
 import com.leaderboardkit.domain.model.LeaderboardEntry
 import com.leaderboardkit.domain.model.LeaderboardException
 import com.leaderboardkit.domain.model.SortDirection
+import com.leaderboardkit.domain.model.TieBreak
 import com.leaderboardkit.domain.repository.LeaderboardRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -54,10 +55,23 @@ class FakeLeaderboardRepository(initialEntries: List<LeaderboardEntry> = emptyLi
     }
 
     private fun rankedEntries(config: LeaderboardConfig, source: List<LeaderboardEntry> = allEntries.value): List<LeaderboardEntry> {
-        val comparator = when (config.sortDirection) {
+        var comparator = when (config.sortDirection) {
             SortDirection.Descending -> compareByDescending<LeaderboardEntry> { it.score }
             SortDirection.Ascending -> compareBy { it.score }
         }
+
+        when (val tb = config.tieBreak) {
+            is TieBreak.None -> {}
+            is TieBreak.EarliestAchievedFirst -> {
+                @Suppress("UNCHECKED_CAST")
+                comparator = comparator.thenBy(nullsLast()) { it.metadata[tb.metadataKey] as? Comparable<Any> }
+            }
+            is TieBreak.LatestAchievedFirst -> {
+                @Suppress("UNCHECKED_CAST")
+                comparator = comparator.thenByDescending(nullsLast()) { it.metadata[tb.metadataKey] as? Comparable<Any> }
+            }
+        }
+
         return source.sortedWith(comparator).mapIndexed { index, entry ->
             entry.copy(rank = rankOverrides[entry.userId] ?: (index + 1))
         }

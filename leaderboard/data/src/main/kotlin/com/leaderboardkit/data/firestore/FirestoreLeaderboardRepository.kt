@@ -13,6 +13,7 @@ import com.leaderboardkit.domain.model.LeaderboardEntry
 import com.leaderboardkit.domain.model.LeaderboardException
 import com.leaderboardkit.domain.model.RefreshStrategy
 import com.leaderboardkit.domain.model.SortDirection
+import com.leaderboardkit.domain.model.TieBreak
 import com.leaderboardkit.domain.repository.LeaderboardRepository
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.delay
@@ -79,8 +80,19 @@ class FirestoreLeaderboardRepository(
             SortDirection.Descending -> Query.Direction.DESCENDING
             SortDirection.Ascending -> Query.Direction.ASCENDING
         }
-        return firestore.collection(pathStrategy.collectionPath(config))
+        var query = firestore.collection(pathStrategy.collectionPath(config))
             .orderBy("score", direction)
+
+        when (val tb = config.tieBreak) {
+            is TieBreak.None -> {}
+            is TieBreak.EarliestAchievedFirst -> {
+                query = query.orderBy("metadata.${tb.metadataKey}", Query.Direction.ASCENDING)
+            }
+            is TieBreak.LatestAchievedFirst -> {
+                query = query.orderBy("metadata.${tb.metadataKey}", Query.Direction.DESCENDING)
+            }
+        }
+        return query
     }
 
     private suspend fun fetchFirstPage(config: LeaderboardConfig, source: Source = Source.DEFAULT): List<LeaderboardEntry> {

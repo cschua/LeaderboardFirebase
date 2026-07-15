@@ -96,4 +96,40 @@ class FakeLeaderboardRepositoryTest {
         val rank = repository.getUserRank("u2", config).getOrNull()
         assertThat(rank).isEqualTo(1)
     }
+
+    @Test
+    fun `EarliestAchievedFirst tie break sorts smaller metadata value first`() = runTest {
+        val t1 = 1000L
+        val t2 = 2000L
+        val repository = FakeLeaderboardRepository(listOf(
+            entry("user2", 100).copy(metadata = mapOf("achievedAt" to t2)),
+            entry("user1", 100).copy(metadata = mapOf("achievedAt" to t1)),
+        ))
+        val config = leaderboardConfig("board") {
+            tieBreak = com.leaderboardkit.domain.model.TieBreak.EarliestAchievedFirst("achievedAt")
+        }
+
+        repository.observeEntries(config).test {
+            val page = awaitItem()
+            assertThat(page.map { it.userId }).containsExactly("user1", "user2").inOrder()
+        }
+    }
+
+    @Test
+    fun `LatestAchievedFirst tie break sorts larger metadata value first`() = runTest {
+        val t1 = 1000L
+        val t2 = 2000L
+        val repository = FakeLeaderboardRepository(listOf(
+            entry("user1", 100).copy(metadata = mapOf("achievedAt" to t1)),
+            entry("user2", 100).copy(metadata = mapOf("achievedAt" to t2)),
+        ))
+        val config = leaderboardConfig("board") {
+            tieBreak = com.leaderboardkit.domain.model.TieBreak.LatestAchievedFirst("achievedAt")
+        }
+
+        repository.observeEntries(config).test {
+            val page = awaitItem()
+            assertThat(page.map { it.userId }).containsExactly("user2", "user1").inOrder()
+        }
+    }
 }
