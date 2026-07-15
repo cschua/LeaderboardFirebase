@@ -1,0 +1,12 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>MagicNumber:CustomRowBoardDemo.kt$0xFFFFF9C4</ID>
+    <ID>MagicNumber:DemoScaffold.kt$100</ID>
+    <ID>MagicNumber:DemoScaffold.kt$10_000</ID>
+    <ID>MagicNumber:ResetCountdown.kt$1_000</ID>
+    <ID>MaxLineLength:DemoScaffold.kt$/** Shared chrome for every demo screen: a back-enabled top bar, a snackbar host [onShowError] can feed, and an optional "submit a random score" FAB. */</ID>
+    <ID>MaxLineLength:DemoScaffold.kt$ExtendedFloatingActionButton(onClick = onSubmitRandomScore, icon = { Icon(Icons.Filled.Add, contentDescription = null) }, text = { Text("Submit score") })</ID>
+  </CurrentIssues>
+</SmellBaseline>

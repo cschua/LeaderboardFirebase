@@ -1,0 +1,7 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>UnusedParameter:WidgetEntrySelection.kt$currentUserId: String</ID>
+  </CurrentIssues>
+</SmellBaseline>

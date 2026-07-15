@@ -1,11 +1,11 @@
 package com.leaderboardkit.data.common
 
 import com.leaderboardkit.domain.model.TimeWindow
-import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
+import kotlin.time.Instant
 
 /**
  * Computes a stable, filesystem/path-safe identifier for the *current* bucket of a
@@ -28,13 +28,16 @@ import kotlin.time.Clock
  */
 internal object TimeWindowBucket {
 
+    private const val EPOCH_DAY_0_OFFSET_TO_MONDAY = 3
+    private const val DAYS_IN_WEEK = 7
+
     fun currentBucketId(timeWindow: TimeWindow, now: Instant = Clock.System.now()): String = when (timeWindow) {
         is TimeWindow.AllTime -> "all"
         is TimeWindow.Daily -> dateIn(timeWindow.resetTimeZone, now).toString()
         is TimeWindow.Weekly -> "wk-" + startOfWeek(timeWindow.resetTimeZone, now).toString()
         is TimeWindow.Monthly -> {
             val date = dateIn(timeWindow.resetTimeZone, now)
-            "%04d-%02d".format(date.year, date.monthNumber)
+            "%04d-%02d".format(date.year, date.month.ordinal + 1)
         }
         is TimeWindow.Season -> "season-${timeWindow.seasonId}"
         is TimeWindow.Custom -> "custom-${timeWindow.range.start.epochSeconds}-${timeWindow.range.endInclusive.epochSeconds}"
@@ -53,7 +56,7 @@ internal object TimeWindowBucket {
      */
     private fun startOfWeek(zone: TimeZone, now: Instant): LocalDate {
         val epochDay = dateIn(zone, now).toEpochDays()
-        val daysSinceMonday = (((epochDay + 3) % 7) + 7) % 7
+        val daysSinceMonday = (((epochDay + EPOCH_DAY_0_OFFSET_TO_MONDAY) % DAYS_IN_WEEK) + DAYS_IN_WEEK) % DAYS_IN_WEEK
         return LocalDate.fromEpochDays(epochDay - daysSinceMonday)
     }
 }

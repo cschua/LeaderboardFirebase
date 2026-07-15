@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>MatchingDeclarationName:FakeRepositoryForUseCaseTests.kt$RecordingLeaderboardRepository : LeaderboardRepository</ID>
+    <ID>MaxLineLength:RefreshStrategy.kt$RefreshStrategy$*</ID>
+  </CurrentIssues>
+</SmellBaseline>

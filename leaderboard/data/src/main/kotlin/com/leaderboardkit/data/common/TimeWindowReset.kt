@@ -2,8 +2,8 @@ package com.leaderboardkit.data.common
 
 import com.leaderboardkit.domain.annotations.InternalLeaderboardKitApi
 import com.leaderboardkit.domain.model.TimeWindow
-import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.Month
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
 import kotlin.time.Clock
@@ -12,6 +12,10 @@ import kotlin.time.Duration.Companion.ZERO
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Instant
+
+private const val EPOCH_DAY_0_OFFSET_TO_MONDAY = 3
+private const val DAYS_IN_WEEK = 7
 
 /**
  * Time remaining until this [TimeWindow]'s next periodic reset, evaluated at
@@ -54,12 +58,16 @@ private fun startOfNextDay(zone: TimeZone, now: Instant): LocalDate =
 /** Same "today is Monday -> next reset is a week away, not today" rule as [TimeWindowBucket]'s own week-bucket math. */
 private fun startOfNextWeek(zone: TimeZone, now: Instant): LocalDate {
     val epochDay = TimeWindowBucket.dateIn(zone, now).toEpochDays()
-    val daysSinceMonday = (((epochDay + 3) % 7) + 7) % 7
-    val daysUntilNextMonday = if (daysSinceMonday == 0L) 7L else 7L - daysSinceMonday
+    val daysSinceMonday = (((epochDay + EPOCH_DAY_0_OFFSET_TO_MONDAY) % DAYS_IN_WEEK) + DAYS_IN_WEEK) % DAYS_IN_WEEK
+    val daysUntilNextMonday = if (daysSinceMonday == 0L) DAYS_IN_WEEK.toLong() else DAYS_IN_WEEK.toLong() - daysSinceMonday
     return LocalDate.fromEpochDays(epochDay + daysUntilNextMonday)
 }
 
 private fun startOfNextMonth(zone: TimeZone, now: Instant): LocalDate {
     val date = TimeWindowBucket.dateIn(zone, now)
-    return if (date.monthNumber == 12) LocalDate(date.year + 1, 1, 1) else LocalDate(date.year, date.monthNumber + 1, 1)
+    return if (date.month == Month.DECEMBER) {
+        LocalDate(date.year + 1, Month.JANUARY, 1)
+    } else {
+        LocalDate(date.year, Month(date.month.ordinal + 2), 1)
+    }
 }

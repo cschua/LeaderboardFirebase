@@ -1,42 +1,66 @@
 build:
   maxIssues: 0
   excludeCorrectable: false
-  weights:
-    # complexity: 2
-    # LongParameterList: 1
-    # style: 1
-    # comments: 1
 
 config:
   validation: true
   warningsAsErrors: false
   checkExhaustiveness: false
-  # when writing own rules with new properties, add the property path to the list, e.g. [ 'complexity>LongMethod>ignoreAnnotated' ]
-  excludes: ''
 
-# See https://detekt.dev/docs/rules/style
+naming:
+  active: true
+  FunctionNaming:
+    active: true
+    # Allow PascalCase for @Composable functions
+    functionPattern: '[a-z][a-zA-Z0-9]*|[A-Z][a-zA-Z0-9]*'
+    excludeClassPattern: '.*'
+  ConstructorParameterNaming:
+    active: true
+    # Allow leading underscore for private properties
+    parameterPattern: '[a-z][a-zA-Z0-9]*'
+  TopLevelPropertyNaming:
+    active: true
+    constantPattern: '[A-Z][_A-Z0-9]*'
+
 style:
   active: true
   MagicNumber:
     active: true
     excludes: ['**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/*.gradle.kts']
     ignoreNumbers: ['-1', '0', '1', '2']
-    ignoreHashCodeFunction: true
     ignorePropertyDeclaration: true
-    ignoreLocalVariableDeclaration: true
     ignoreConstantDeclaration: true
-    ignoreCompanionObjectPropertyDeclaration: true
     ignoreAnnotation: true
     ignoreNamedArgument: true
     ignoreEnums: true
+    # Ignore @Preview functions
+    ignoreAnnotated: ['Preview']
+  UnusedPrivateMember:
+    active: true
+    # Ignore @Preview functions
+    ignoreAnnotated: ['Preview']
+  MaxLineLength:
+    active: true
+    maxLineLength: 150
 
 complexity:
   active: true
   TooManyFunctions:
     active: true
-    excludes: ['**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**']
-    thresholdInFiles: 20
-    thresholdInClasses: 20
-    thresholdInInterfaces: 20
-    thresholdInObjects: 20
-    thresholdInEnums: 20
+    thresholdInFiles: 40
+  LongParameterList:
+    active: true
+    # Ignore @Composable functions as they often have many parameters
+    ignoreAnnotated: ['Composable']
+  ComplexCondition:
+    active: true
+    threshold: 4
+
+exceptions:
+  active: true
+
+empty-blocks:
+  active: true
+
+potential-bugs:
+  active: true

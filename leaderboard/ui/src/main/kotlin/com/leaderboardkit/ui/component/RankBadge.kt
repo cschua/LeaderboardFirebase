@@ -19,6 +19,10 @@ private val GoldMedal = Color(0xFFFFD700)
 private val SilverMedal = Color(0xFFC0C0C0)
 private val BronzeMedal = Color(0xFFCD7F32)
 
+private const val RANK_FIRST = 1
+private const val RANK_SECOND = 2
+private const val RANK_THIRD = 3
+
 /** Renders [rank] per [style]. `null` (unranked) always falls back to a "-" placeholder. */
 @Composable
 fun RankBadge(
@@ -30,9 +34,9 @@ fun RankBadge(
     when (style) {
         RankBadgeStyle.Numeric -> NumericRankBadge(rank, modifier, textStyle)
         RankBadgeStyle.MedalIcon -> when (rank) {
-            1 -> MedalRankBadge(GoldMedal, rank, modifier)
-            2 -> MedalRankBadge(SilverMedal, rank, modifier)
-            3 -> MedalRankBadge(BronzeMedal, rank, modifier)
+            RANK_FIRST -> MedalRankBadge(GoldMedal, rank, modifier)
+            RANK_SECOND -> MedalRankBadge(SilverMedal, rank, modifier)
+            RANK_THIRD -> MedalRankBadge(BronzeMedal, rank, modifier)
             else -> NumericRankBadge(rank, modifier, textStyle)
         }
         is RankBadgeStyle.Custom -> style.content(rank)

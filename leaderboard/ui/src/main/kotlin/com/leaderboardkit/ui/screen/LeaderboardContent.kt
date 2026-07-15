@@ -97,9 +97,11 @@ private fun LeaderboardList(
     LaunchedEffect(listState) {
         snapshotFlow { listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index }
             .collect { lastVisibleIndex ->
+                if (lastVisibleIndex == null) return@collect
                 val s = latestState
                 val threshold = s.entries.size - 1 - s.config.prefetchDistance
-                if (lastVisibleIndex != null && lastVisibleIndex >= threshold && s.canLoadMore && !s.isLoadingMore) {
+                val reachedThreshold = lastVisibleIndex >= threshold
+                if (reachedThreshold && s.canLoadMore && !s.isLoadingMore) {
                     onIntent(LeaderboardIntent.LoadMore)
                 }
             }

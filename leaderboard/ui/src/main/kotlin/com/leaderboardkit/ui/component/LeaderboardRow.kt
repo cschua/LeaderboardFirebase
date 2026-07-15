@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -22,6 +21,8 @@ import com.leaderboardkit.ui.avatar.AvatarResolver
 import com.leaderboardkit.ui.avatar.DefaultAvatarResolver
 import com.leaderboardkit.ui.theme.LeaderboardTheme
 import com.leaderboardkit.ui.theme.rememberLeaderboardTheme
+
+private const val TOP_THREE_THRESHOLD = 3
 
 /**
  * A single leaderboard row: rank badge, avatar, display name, score — with
@@ -41,7 +42,7 @@ fun LeaderboardRow(
 ) {
     val backgroundColor = when {
         isCurrentUser -> theme.colors.currentUserRowHighlight
-        (entry.rank ?: Int.MAX_VALUE) <= 3 -> theme.colors.topThreeHighlight
+        (entry.rank ?: Int.MAX_VALUE) <= TOP_THREE_THRESHOLD -> theme.colors.topThreeHighlight
         else -> Color.Transparent
     }
 

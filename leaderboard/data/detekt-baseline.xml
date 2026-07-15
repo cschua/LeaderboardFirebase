@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>MaxLineLength:FirestoreLeaderboardRepository.kt$FirestoreLeaderboardRepository$.</ID>
+    <ID>MaxLineLength:RankedWindow.kt$/** Rank of the first element in a "better-than-anchor" window, given the anchor's own [anchorRank] and how many entries beat it ([betterCount]). Never below rank 1. */</ID>
+    <ID>MaxLineLength:RankedWindow.kt$/** Stamps consecutive ranks onto [entries] (already in display order), starting at [startRank]. Shared by every [com.leaderboardkit.domain.repository.LeaderboardRepository] implementation. */</ID>
+    <ID>TooManyFunctions:FirestoreLeaderboardRepository.kt$FirestoreLeaderboardRepository : LeaderboardRepository</ID>
+    <ID>TooManyFunctions:RealtimeDbLeaderboardRepository.kt$RealtimeDbLeaderboardRepository : LeaderboardRepository</ID>
+  </CurrentIssues>
+</SmellBaseline>

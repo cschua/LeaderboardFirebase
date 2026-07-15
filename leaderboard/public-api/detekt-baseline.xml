@@ -1,0 +1,7 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>MaxLineLength:LeaderboardKit.kt$/** Rendered by [LeaderboardScreen]/[LeaderboardWidget] in place of the board when no [LeaderboardClient] reaches them via [LocalLeaderboardClient]. */</ID>
+  </CurrentIssues>
+</SmellBaseline>

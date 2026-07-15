@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>LongMethod:RetroLeaderboardScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun RetroLeaderboardScreen( dependencies: LeaderboardDependencies, currentUserId: String, modifier: Modifier = Modifier, )</ID>
+    <ID>MagicNumber:RetroLeaderboardScreen.kt$100</ID>
+    <ID>MagicNumber:RetroLeaderboardScreen.kt$10_000</ID>
+    <ID>MagicNumber:RetroResetCountdown.kt$1_000</ID>
+    <ID>MaxLineLength:RetroBoardStates.kt$/** Arcade-flavored `errorStateContent` for [com.leaderboardkit.ui.screen.LeaderboardContent] — retry dispatches [com.leaderboardkit.presentation.LeaderboardIntent.Refresh]. */</ID>
+  </CurrentIssues>
+</SmellBaseline>
