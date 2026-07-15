@@ -205,6 +205,24 @@ class LeaderboardViewModelTest {
     }
 
     @Test
+    fun `ChangeTimeWindow resets the board and reloads under the new config`() = runTest {
+        val repository = FakeLeaderboardRepository(listOf(entry("me", 10)))
+        val vm = viewModel(repository, currentUserId = "me")
+        val newWindow = com.leaderboardkit.domain.model.TimeWindow.Weekly(resetTimeZone = kotlinx.datetime.TimeZone.UTC)
+
+        vm.state.test {
+            var latest = awaitItem()
+            while (latest.entries.isEmpty()) latest = awaitItem()
+
+            vm.onIntent(LeaderboardIntent.ChangeTimeWindow(newWindow))
+
+            latest = awaitItem()
+            assertThat(latest.config.timeWindow).isEqualTo(newWindow)
+            assertThat(latest.isLoading).isTrue()
+        }
+    }
+
+    @Test
     fun `an error on one config does not block entries loading after a later config change`() = runTest {
         val failingScope = LeaderboardScope.Category("boom")
         val repository = FlakyRepository(FakeLeaderboardRepository(listOf(entry("me", 10))), failingScope)
