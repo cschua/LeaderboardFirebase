@@ -22,15 +22,20 @@ android {
         targetCompatibility = JavaVersion.VERSION_21
     }
 
-    kotlin {
-        compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_21)
-            javaParameters.set(true)
-        }
-    }
-
     buildFeatures {
         compose = true
+    }
+
+    lint {
+        baseline = file("lint-sample-baseline.xml")
+        abortOnError = true
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_21)
+        javaParameters.set(true)
     }
 }
 

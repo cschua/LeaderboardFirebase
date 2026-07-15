@@ -5,7 +5,6 @@ agp = "9.2.1"
 coroutines = "1.11.0"
 kotlinxDatetime = "0.8.0"
 androidxCore = "1.19.0"
-hilt = "2.60.1"
 firebaseBom = "34.16.0"
 playServicesTasks = "1.11.0"
 junit4 = "4.13.2"
@@ -19,6 +18,7 @@ composeBom = "2026.06.01"
 kover = "0.9.8"
 ksp = "2.3.4"
 googleServices = "4.5.0"
+detekt = "1.23.8"
 
 [libraries]
 javax-inject = { module = "javax.inject:javax.inject", version.ref = "javaxInject" }
@@ -29,9 +29,6 @@ kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-t
 kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinxDatetime" }
 
 androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "androidxCore" }
-
-hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "hilt" }
-hilt-compiler = { module = "com.google.dagger:hilt-android-compiler", version.ref = "hilt" }
 
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }
 firebase-firestore = { module = "com.google.firebase:firebase-firestore" }
@@ -66,7 +63,7 @@ android-library = { id = "com.android.library", version.ref = "agp" }
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
-hilt-android = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
 kotlinx-kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 google-services = { id = "com.google.gms.google-services", version.ref = "googleServices" }
+detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
