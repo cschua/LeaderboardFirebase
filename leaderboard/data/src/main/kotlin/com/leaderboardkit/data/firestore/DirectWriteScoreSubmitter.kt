@@ -59,7 +59,6 @@ class DirectWriteScoreSubmitter(
                     transaction.set(docRef, mapper.toDocument(entry))
                 }
             }.await()
-            Unit
         }
     }
 

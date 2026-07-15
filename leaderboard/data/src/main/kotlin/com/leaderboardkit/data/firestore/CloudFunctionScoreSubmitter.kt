@@ -42,6 +42,5 @@ class CloudFunctionScoreSubmitter(
             "metadata" to metadata,
         )
         functions.getHttpsCallable(functionName).call(payload).await()
-        Unit
     }
 }
