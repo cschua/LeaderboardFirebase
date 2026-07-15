@@ -3,6 +3,7 @@ package com.leaderboardkit.domain.usecase
 import com.google.common.truth.Truth.assertThat
 import com.leaderboardkit.domain.RecordingLeaderboardRepository
 import com.leaderboardkit.domain.model.LeaderboardEntry
+import com.leaderboardkit.domain.model.LeaderboardException
 import com.leaderboardkit.domain.testConfig
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
@@ -38,5 +39,16 @@ class GetNearbyRanksUseCaseTest {
             // expected
         }
         assertThat(repository.lastNearbyQuery).isNull()
+    }
+
+    @Test
+    fun `forwards UserNotFound failure from repository`() = runTest {
+        val exception = LeaderboardException.UserNotFound("u1")
+        val repository = RecordingLeaderboardRepository(nearbyEntries = Result.failure(exception))
+        val useCase = GetNearbyRanksUseCase(repository)
+
+        val result = useCase("u1", radius = 1, testConfig())
+
+        assertThat(result.exceptionOrNull()).isSameInstanceAs(exception)
     }
 }

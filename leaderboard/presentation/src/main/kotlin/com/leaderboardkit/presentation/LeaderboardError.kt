@@ -1,6 +1,7 @@
 package com.leaderboardkit.presentation
 
 import com.leaderboardkit.domain.annotations.InternalLeaderboardKitApi
+import com.leaderboardkit.domain.model.LeaderboardException
 import kotlin.time.Duration
 
 /**
@@ -26,7 +27,7 @@ fun LeaderboardError.toDisplayMessage(): String = when (this) {
 
 @OptIn(InternalLeaderboardKitApi::class)
 internal fun Throwable.toLeaderboardError(): LeaderboardError = when (this) {
-    is com.leaderboardkit.domain.model.LeaderboardException.RateLimitExceeded -> LeaderboardError.RateLimited(retryAfter)
-    is com.leaderboardkit.domain.model.LeaderboardException.UserNotFound -> LeaderboardError.UserNotFound
+    is LeaderboardException.RateLimitExceeded -> LeaderboardError.RateLimited(retryAfter)
+    is LeaderboardException.UserNotFound -> LeaderboardError.UserNotFound
     else -> LeaderboardError.Unknown(message ?: this::class.simpleName ?: "Unknown error")
 }

@@ -7,6 +7,7 @@ import com.google.common.truth.Truth.assertThat
 import com.leaderboardkit.data.common.AvatarDefaults
 import com.leaderboardkit.domain.annotations.InternalLeaderboardKitApi
 import com.leaderboardkit.domain.model.LeaderboardEntry
+import com.leaderboardkit.domain.model.LeaderboardException
 import com.leaderboardkit.domain.model.leaderboardConfig
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
@@ -73,6 +74,16 @@ class FakeLeaderboardRepositoryTest {
         val result = repository.getSurroundingEntries("u7", radius = 2, config).getOrNull()
 
         assertThat(result?.map { it.userId }).containsExactly("u9", "u8", "u7", "u6", "u5").inOrder()
+    }
+
+    @Test
+    fun `getSurroundingEntries returns UserNotFound when the anchor user is missing`() = runTest {
+        val repository = FakeLeaderboardRepository(listOf(entry("u1", 10)))
+        val config = leaderboardConfig("board") { }
+
+        val result = repository.getSurroundingEntries("missing", radius = 1, config)
+
+        assertThat(result.exceptionOrNull()).isInstanceOf(LeaderboardException.UserNotFound::class.java)
     }
 
     @Test

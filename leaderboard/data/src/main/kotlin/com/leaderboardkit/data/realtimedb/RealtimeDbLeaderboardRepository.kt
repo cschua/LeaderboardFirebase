@@ -12,6 +12,7 @@ import com.leaderboardkit.data.common.surroundingWindow
 import com.leaderboardkit.domain.annotations.InternalLeaderboardKitApi
 import com.leaderboardkit.domain.model.LeaderboardConfig
 import com.leaderboardkit.domain.model.LeaderboardEntry
+import com.leaderboardkit.domain.model.LeaderboardException
 import com.leaderboardkit.domain.model.RefreshStrategy
 import com.leaderboardkit.domain.model.SortDirection
 import com.leaderboardkit.domain.repository.LeaderboardRepository
@@ -203,7 +204,7 @@ class RealtimeDbLeaderboardRepository(
     ): Result<List<LeaderboardEntry>> = runCatching {
         val all = fetchAllOrderedAscending(config)
         val index = all.indexOfFirst { it.key == userId }
-        if (index < 0) return@runCatching emptyList()
+        if (index < 0) throw LeaderboardException.UserNotFound(userId)
 
         val window = surroundingWindow(all, index, radius, config.sortDirection)
         assignRanks(toEntries(window.items), startRank = window.startRank)

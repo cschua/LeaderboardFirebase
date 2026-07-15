@@ -4,6 +4,7 @@ import com.leaderboardkit.data.common.AvatarDefaults
 import com.leaderboardkit.domain.annotations.InternalLeaderboardKitApi
 import com.leaderboardkit.domain.model.LeaderboardConfig
 import com.leaderboardkit.domain.model.LeaderboardEntry
+import com.leaderboardkit.domain.model.LeaderboardException
 import com.leaderboardkit.domain.model.SortDirection
 import com.leaderboardkit.domain.repository.LeaderboardRepository
 import kotlinx.coroutines.flow.Flow
@@ -115,7 +116,7 @@ class FakeLeaderboardRepository(initialEntries: List<LeaderboardEntry> = emptyLi
     ): Result<List<LeaderboardEntry>> {
         val ranked = rankedEntries(config)
         val index = ranked.indexOfFirst { it.userId == userId }
-        if (index < 0) return Result.success(emptyList())
+        if (index < 0) return Result.failure(LeaderboardException.UserNotFound(userId))
         val from = (index - radius).coerceAtLeast(0)
         val to = (index + radius).coerceAtMost(ranked.size - 1)
         return Result.success(ranked.subList(from, to + 1))

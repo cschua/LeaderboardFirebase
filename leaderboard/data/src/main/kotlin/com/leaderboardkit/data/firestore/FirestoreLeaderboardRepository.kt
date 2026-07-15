@@ -10,17 +10,18 @@ import com.leaderboardkit.data.common.assignRanks
 import com.leaderboardkit.domain.annotations.InternalLeaderboardKitApi
 import com.leaderboardkit.domain.model.LeaderboardConfig
 import com.leaderboardkit.domain.model.LeaderboardEntry
+import com.leaderboardkit.domain.model.LeaderboardException
 import com.leaderboardkit.domain.model.RefreshStrategy
 import com.leaderboardkit.domain.model.SortDirection
 import com.leaderboardkit.domain.repository.LeaderboardRepository
 import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.tasks.await
-import kotlinx.coroutines.delay
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -192,7 +193,7 @@ class FirestoreLeaderboardRepository(
     ): Result<List<LeaderboardEntry>> = runCatching {
         val collection = firestore.collection(pathStrategy.collectionPath(config))
         val anchorDoc = collection.document(userId).get().await()
-        if (!anchorDoc.exists()) return@runCatching emptyList()
+        if (!anchorDoc.exists()) throw LeaderboardException.UserNotFound(userId)
         val anchorScore = (anchorDoc.get("score") as? Number)?.toLong()
             ?: return@runCatching emptyList()
         val anchorRank = (countBetter(config, anchorScore) + 1).toInt()
@@ -204,7 +205,13 @@ class FirestoreLeaderboardRepository(
         }
 
         val aboveSnapshot = collection
-            .let { if (config.sortDirection == SortDirection.Descending) it.whereGreaterThan("score", anchorScore) else it.whereLessThan("score", anchorScore) }
+            .let {
+                if (config.sortDirection == SortDirection.Descending) {
+                    it.whereGreaterThan("score", anchorScore)
+                } else {
+                    it.whereLessThan("score", anchorScore)
+                }
+            }
             .orderBy("score", betterOp)
             .limit(radius.toLong())
             .get().await()
@@ -214,7 +221,13 @@ class FirestoreLeaderboardRepository(
         )
 
         val belowSnapshot = collection
-            .let { if (config.sortDirection == SortDirection.Descending) it.whereLessThan("score", anchorScore) else it.whereGreaterThan("score", anchorScore) }
+            .let {
+                if (config.sortDirection == SortDirection.Descending) {
+                    it.whereLessThan("score", anchorScore)
+                } else {
+                    it.whereGreaterThan("score", anchorScore)
+                }
+            }
             .orderBy("score", worseOp)
             .limit(radius.toLong())
             .get().await()
