@@ -3,10 +3,16 @@ package com.leaderboardkit.data.common
 import com.leaderboardkit.domain.model.LeaderboardEntry
 import com.leaderboardkit.domain.model.SortDirection
 
-/** [items] is already in display order (best rank first); [startRank] is the rank of its first element. */
+/**
+ * [items] is already in display order (best rank first);
+ * [startRank] is the rank of its first element.
+ */
 data class RankedWindow<T>(val items: List<T>, val startRank: Int)
 
-/** Stamps consecutive ranks onto [entries] (already in display order), starting at [startRank]. Shared by every [com.leaderboardkit.domain.repository.LeaderboardRepository] implementation. */
+/**
+ * Stamps consecutive ranks onto [entries] (already in display order), starting at [startRank].
+ * Shared by every [com.leaderboardkit.domain.repository.LeaderboardRepository] implementation.
+ */
 fun assignRanks(entries: List<LeaderboardEntry>, startRank: Int): List<LeaderboardEntry> =
     entries.mapIndexed { index, entry -> entry.copy(rank = startRank + index) }
 
@@ -42,5 +48,8 @@ fun <T> surroundingWindow(ascending: List<T>, anchorIndex: Int, radius: Int, sor
     return RankedWindow(display.subList(from, to + 1), startRank = from + 1)
 }
 
-/** Rank of the first element in a "better-than-anchor" window, given the anchor's own [anchorRank] and how many entries beat it ([betterCount]). Never below rank 1. */
+/**
+ * Rank of the first element in a "better-than-anchor" window, given the anchor's own [anchorRank]
+ * and how many entries beat it ([betterCount]). Never below rank 1.
+ */
 fun aboveWindowStartRank(anchorRank: Int, betterCount: Int): Int = (anchorRank - betterCount).coerceAtLeast(1)

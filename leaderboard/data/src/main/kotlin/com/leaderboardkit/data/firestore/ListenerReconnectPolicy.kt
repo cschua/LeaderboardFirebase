@@ -1,9 +1,9 @@
 package com.leaderboardkit.data.firestore
 
-import kotlinx.datetime.Instant
 import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Instant
 
 /**
  * Firestore's offline-persistence layer can serve a snapshot listener's initial

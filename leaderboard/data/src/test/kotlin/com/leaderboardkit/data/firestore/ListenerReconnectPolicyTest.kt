@@ -1,10 +1,9 @@
 package com.leaderboardkit.data.firestore
 
 import com.google.common.truth.Truth.assertThat
-import kotlinx.datetime.Instant
-import kotlinx.datetime.plus
 import org.junit.Test
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Instant
 
 class ListenerReconnectPolicyTest {
 
@@ -21,7 +20,7 @@ class ListenerReconnectPolicyTest {
         policy.markActive("board1", now = t0)
         policy.markInactive("board1", now = t0)
 
-        assertThat(policy.shouldForceServerRead("board1", now = t0.plus(10.minutes))).isFalse()
+        assertThat(policy.shouldForceServerRead("board1", now = t0 + 10.minutes)).isFalse()
     }
 
     @Test
@@ -29,7 +28,7 @@ class ListenerReconnectPolicyTest {
         policy.markActive("board1", now = t0)
         policy.markInactive("board1", now = t0)
 
-        assertThat(policy.shouldForceServerRead("board1", now = t0.plus(31.minutes))).isTrue()
+        assertThat(policy.shouldForceServerRead("board1", now = t0 + 31.minutes)).isTrue()
     }
 
     @Test
@@ -37,7 +36,7 @@ class ListenerReconnectPolicyTest {
         policy.markActive("board1", now = t0)
         policy.markInactive("board1", now = t0)
 
-        assertThat(policy.shouldForceServerRead("board2", now = t0.plus(31.minutes))).isFalse()
+        assertThat(policy.shouldForceServerRead("board2", now = t0 + 31.minutes)).isFalse()
     }
 
     @Test
@@ -45,18 +44,18 @@ class ListenerReconnectPolicyTest {
         policy.markActive("board1", now = t0)
         policy.markInactive("board1", now = t0)
 
-        assertThat(policy.shouldForceServerRead("board1", now = t0.plus(30.minutes))).isFalse()
+        assertThat(policy.shouldForceServerRead("board1", now = t0 + 30.minutes)).isFalse()
     }
 
     @Test
     fun `becoming active again resets the gap even after going stale`() {
         policy.markActive("board1", now = t0)
         policy.markInactive("board1", now = t0)
-        assertThat(policy.shouldForceServerRead("board1", now = t0.plus(31.minutes))).isTrue()
+        assertThat(policy.shouldForceServerRead("board1", now = t0 + 31.minutes)).isTrue()
 
-        policy.markActive("board1", now = t0.plus(31.minutes))
+        policy.markActive("board1", now = t0 + 31.minutes)
 
-        assertThat(policy.shouldForceServerRead("board1", now = t0.plus(35.minutes))).isFalse()
+        assertThat(policy.shouldForceServerRead("board1", now = t0 + 35.minutes)).isFalse()
     }
 
     @Test

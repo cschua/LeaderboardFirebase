@@ -2,9 +2,9 @@ package com.leaderboardkit.data.common
 
 import com.google.common.truth.Truth.assertThat
 import com.leaderboardkit.domain.model.TimeWindow
-import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import org.junit.Test
+import kotlin.time.Instant
 
 class TimeWindowBucketTest {
 

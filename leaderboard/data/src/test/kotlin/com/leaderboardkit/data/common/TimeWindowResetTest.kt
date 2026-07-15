@@ -5,7 +5,6 @@ package com.leaderboardkit.data.common
 import com.google.common.truth.Truth.assertThat
 import com.leaderboardkit.domain.annotations.InternalLeaderboardKitApi
 import com.leaderboardkit.domain.model.TimeWindow
-import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import org.junit.Test
 import kotlin.time.Duration
@@ -13,6 +12,7 @@ import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.Instant
 
 class TimeWindowResetTest {
 
