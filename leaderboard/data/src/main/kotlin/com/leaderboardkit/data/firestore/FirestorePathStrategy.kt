@@ -1,5 +1,6 @@
 package com.leaderboardkit.data.firestore
 
+import com.leaderboardkit.data.common.CommonPathStrategy
 import com.leaderboardkit.data.common.TimeWindowBucket
 import com.leaderboardkit.domain.annotations.InternalLeaderboardKitApi
 import com.leaderboardkit.domain.model.LeaderboardConfig
@@ -29,22 +30,5 @@ fun interface FirestorePathStrategy {
  */
 @InternalLeaderboardKitApi
 class DefaultFirestorePathStrategy : FirestorePathStrategy {
-    override fun collectionPath(config: LeaderboardConfig): String {
-        val windowBucket = TimeWindowBucket.currentBucketId(config.timeWindow)
-        val scopeSegment = when (val scope = config.scope) {
-            is LeaderboardScope.Global -> null
-            is LeaderboardScope.Friends -> "friendsOf/${scope.currentUserId}"
-            is LeaderboardScope.Category -> "category/${scope.categoryId}"
-            is LeaderboardScope.Custom -> "custom/${scope.filterId}"
-        }
-        val segments = listOfNotNull(
-            "leaderboards",
-            config.boardId,
-            "windows",
-            windowBucket,
-            scopeSegment,
-            "entries",
-        )
-        return segments.joinToString("/")
-    }
+    override fun collectionPath(config: LeaderboardConfig): String = CommonPathStrategy.resolvePath(config)
 }

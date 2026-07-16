@@ -5,6 +5,8 @@ import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.Source
+import com.leaderboardkit.data.common.BaseBoardState
+import com.leaderboardkit.data.common.RepositoryUtils
 import com.leaderboardkit.data.common.aboveWindowStartRank
 import com.leaderboardkit.data.common.assignRanks
 import com.leaderboardkit.domain.annotations.InternalLeaderboardKitApi
@@ -16,10 +18,8 @@ import com.leaderboardkit.domain.model.SortDirection
 import com.leaderboardkit.domain.model.TieBreak
 import com.leaderboardkit.domain.repository.LeaderboardRepository
 import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.tasks.await
@@ -60,18 +60,11 @@ class FirestoreLeaderboardRepository(
     private val scoreSubmitter: ScoreSubmitter,
 ) : LeaderboardRepository {
 
-    private class BoardState {
-        val mutex = Mutex()
-        var loadedEntries: List<LeaderboardEntry> = emptyList()
-        var lastDocument: DocumentSnapshot? = null
-        var endReached: Boolean = false
-    }
-
-    private val boardStates = ConcurrentHashMap<String, BoardState>()
+    private val boardStates = ConcurrentHashMap<String, BaseBoardState<DocumentSnapshot>>()
     private val reconnectPolicy = ListenerReconnectPolicy()
 
-    private fun stateFor(config: LeaderboardConfig): BoardState =
-        boardStates.getOrPut(boardKey(config)) { BoardState() }
+    private fun stateFor(config: LeaderboardConfig): BaseBoardState<DocumentSnapshot> =
+        boardStates.getOrPut(boardKey(config)) { BaseBoardState() }
 
     private fun boardKey(config: LeaderboardConfig): String = config.boardId
 
@@ -99,25 +92,16 @@ class FirestoreLeaderboardRepository(
         val snapshot = baseQuery(config).limit(config.pageSize.toLong()).get(source).await()
         val entries = assignRanks(snapshot.documents.map { mapper.fromDocument(it.id, it.data.orEmpty()) }, startRank = 1)
         val state = stateFor(config)
-        state.loadedEntries = entries
-        state.lastDocument = snapshot.documents.lastOrNull()
-        state.endReached = snapshot.documents.size < config.pageSize
+        state.update(
+            newEntries = entries,
+            nextCursor = snapshot.documents.lastOrNull(),
+            isEnd = snapshot.documents.size < config.pageSize,
+        )
         return entries
     }
 
     override fun observeEntries(config: LeaderboardConfig): Flow<List<LeaderboardEntry>> =
-        when (val strategy = config.refreshStrategy) {
-            is RefreshStrategy.RealtimeListener -> observeRealtime(config)
-            is RefreshStrategy.Polling -> flow {
-                while (true) {
-                    emit(fetchFirstPage(config))
-                    delay(strategy.interval)
-                }
-            }
-            is RefreshStrategy.ManualOnly -> flow {
-                emit(fetchFirstPage(config))
-            }
-        }
+        RepositoryUtils.observeEntries(config, ::observeRealtime, ::fetchFirstPage)
 
     private fun observeRealtime(config: LeaderboardConfig): Flow<List<LeaderboardEntry>> = callbackFlow {
         val key = boardKey(config)
@@ -139,9 +123,11 @@ class FirestoreLeaderboardRepository(
                     startRank = 1,
                 )
                 val state = stateFor(config)
-                state.loadedEntries = entries
-                state.lastDocument = snapshot.documents.lastOrNull()
-                state.endReached = snapshot.documents.size < config.pageSize
+                state.update(
+                    newEntries = entries,
+                    nextCursor = snapshot.documents.lastOrNull(),
+                    isEnd = snapshot.documents.size < config.pageSize,
+                )
                 trySend(entries)
             }
         }
@@ -156,7 +142,7 @@ class FirestoreLeaderboardRepository(
         val state = stateFor(config)
         state.mutex.withLock {
             if (state.endReached) return@withLock false
-            val cursor = state.lastDocument
+            val cursor = state.cursor
             val query = baseQuery(config).limit(config.pageSize.toLong()).let {
                 if (cursor != null) it.startAfter(cursor) else it
             }
@@ -169,9 +155,12 @@ class FirestoreLeaderboardRepository(
                 snapshot.documents.map { mapper.fromDocument(it.id, it.data.orEmpty()) },
                 startRank = state.loadedEntries.size + 1,
             )
-            state.loadedEntries = state.loadedEntries + nextPage
-            state.lastDocument = snapshot.documents.last()
-            state.endReached = snapshot.documents.size < config.pageSize
+            state.update(
+                newEntries = nextPage,
+                nextCursor = snapshot.documents.last(),
+                isEnd = snapshot.documents.size < config.pageSize,
+                append = true,
+            )
             true
         }
     }

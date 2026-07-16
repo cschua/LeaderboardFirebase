@@ -5,7 +5,10 @@ import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.Query
 import com.google.firebase.database.ValueEventListener
-import com.leaderboardkit.data.common.AvatarDefaults
+import com.leaderboardkit.data.common.BaseBoardState
+import com.leaderboardkit.data.common.EntryFields
+import com.leaderboardkit.data.common.RepositoryUtils
+import com.leaderboardkit.data.common.ScoreSubmissionHelper
 import com.leaderboardkit.data.common.assignRanks
 import com.leaderboardkit.data.common.rankFromAscendingIndex
 import com.leaderboardkit.data.common.surroundingWindow
@@ -13,15 +16,11 @@ import com.leaderboardkit.domain.annotations.InternalLeaderboardKitApi
 import com.leaderboardkit.domain.model.LeaderboardConfig
 import com.leaderboardkit.domain.model.LeaderboardEntry
 import com.leaderboardkit.domain.model.LeaderboardException
-import com.leaderboardkit.domain.model.RefreshStrategy
 import com.leaderboardkit.domain.model.SortDirection
 import com.leaderboardkit.domain.repository.LeaderboardRepository
 import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.tasks.await
 import java.util.concurrent.ConcurrentHashMap
@@ -47,17 +46,10 @@ class RealtimeDbLeaderboardRepository(
 
     private data class Cursor(val score: Double, val key: String)
 
-    private class BoardState {
-        val mutex = Mutex()
-        var loadedEntries: List<LeaderboardEntry> = emptyList()
-        var cursor: Cursor? = null
-        var endReached: Boolean = false
-    }
+    private val boardStates = ConcurrentHashMap<String, BaseBoardState<Cursor>>()
 
-    private val boardStates = ConcurrentHashMap<String, BoardState>()
-
-    private fun stateFor(config: LeaderboardConfig): BoardState =
-        boardStates.getOrPut(config.boardId) { BoardState() }
+    private fun stateFor(config: LeaderboardConfig): BaseBoardState<Cursor> =
+        boardStates.getOrPut(config.boardId) { BaseBoardState() }
 
     private fun baseQuery(config: LeaderboardConfig): Query =
         database.child(pathStrategy.nodePath(config)).orderByChild("score")
@@ -94,24 +86,17 @@ class RealtimeDbLeaderboardRepository(
     }
 
     override fun observeEntries(config: LeaderboardConfig): Flow<List<LeaderboardEntry>> =
-        when (val strategy = config.refreshStrategy) {
-            is RefreshStrategy.RealtimeListener -> observeRealtime(config)
-            is RefreshStrategy.Polling -> flow {
-                while (true) {
-                    emit(fetchFirstPage(config))
-                    delay(strategy.interval)
-                }
-            }
-            is RefreshStrategy.ManualOnly -> flow { emit(fetchFirstPage(config)) }
-        }
+        RepositoryUtils.observeEntries(config, ::observeRealtime, ::fetchFirstPage)
 
     private suspend fun fetchFirstPage(config: LeaderboardConfig): List<LeaderboardEntry> {
         val (entries, cursor) = fetchPage(config, after = null)
         val ranked = assignRanks(entries, startRank = 1)
         val state = stateFor(config)
-        state.loadedEntries = ranked
-        state.cursor = cursor
-        state.endReached = entries.size < config.pageSize
+        state.update(
+            newEntries = ranked,
+            nextCursor = cursor,
+            isEnd = entries.size < config.pageSize,
+        )
         return ranked
     }
 
@@ -147,9 +132,12 @@ class RealtimeDbLeaderboardRepository(
                 return@withLock false
             }
             val ranked = assignRanks(entries, startRank = state.loadedEntries.size + 1)
-            state.loadedEntries = state.loadedEntries + ranked
-            state.cursor = cursor
-            state.endReached = entries.size < config.pageSize
+            state.update(
+                newEntries = ranked,
+                nextCursor = cursor,
+                isEnd = entries.size < config.pageSize,
+                append = true,
+            )
             true
         }
     }
@@ -162,29 +150,19 @@ class RealtimeDbLeaderboardRepository(
     ): Result<Unit> = runCatching {
         val nodeRef = database.child(pathStrategy.nodePath(config)).child(userId)
         val existing = nodeRef.get().await()
-        val existingScore = (existing.child("score").value as? Number)?.toLong()
-        val shouldWrite = existingScore == null || isBetter(score, existingScore, config)
+        val existingScore = (existing.child(EntryFields.SCORE).value as? Number)?.toLong()
+        val shouldWrite = existingScore == null || ScoreSubmissionHelper.isBetter(score, existingScore, config)
         if (shouldWrite) {
-            val entry = LeaderboardEntry(
+            val entry = ScoreSubmissionHelper.createSubmissionEntry(
                 userId = userId,
-                displayName = metadata["displayName"] as? String
-                    ?: (existing.child("displayName").value as? String).orEmpty(),
-                avatarId = metadata["avatarId"] as? String
-                    ?: existing.child("avatarId").value as? String
-                    ?: AvatarDefaults.DEFAULT_AVATAR_ID,
                 score = score,
-                rank = null,
-                metadata = metadata - "displayName" - "avatarId",
+                metadata = metadata,
+                existingDisplayName = existing.child(EntryFields.DISPLAY_NAME).value as? String,
+                existingAvatarId = existing.child(EntryFields.AVATAR_ID).value as? String,
             )
             nodeRef.setValue(mapper.toNode(entry)).await()
         }
     }
-
-    private fun isBetter(candidate: Long, existing: Long, config: LeaderboardConfig): Boolean =
-        when (config.sortDirection) {
-            SortDirection.Descending -> candidate > existing
-            SortDirection.Ascending -> candidate < existing
-        }
 
     /** Fetches the full ordered entry set. Only safe for boards small enough for client-side ranking — see class KDoc. */
     private suspend fun fetchAllOrderedAscending(config: LeaderboardConfig): List<DataSnapshot> =

@@ -1,25 +1,14 @@
 package com.leaderboardkit.data.firestore
 
 import com.google.firebase.firestore.FirebaseFirestore
-import com.leaderboardkit.data.common.AvatarDefaults
+import com.leaderboardkit.data.common.EntryFields
+import com.leaderboardkit.data.common.ScoreSubmissionHelper
 import com.leaderboardkit.data.ratelimit.ClientRateLimiter
 import com.leaderboardkit.domain.annotations.InternalLeaderboardKitApi
 import com.leaderboardkit.domain.model.LeaderboardConfig
-import com.leaderboardkit.domain.model.LeaderboardEntry
 import com.leaderboardkit.domain.model.LeaderboardException
-import com.leaderboardkit.domain.model.SortDirection
 import kotlinx.coroutines.tasks.await
 
-/**
- * [displayName]/`avatarId` are not parameters of [ScoreSubmitter.submit] — this
- * library treats score submission and profile display fields as separate
- * concerns. If a caller wants to (re)set them alongside a score, it passes them
- * through `metadata["displayName"]` / `metadata["avatarId"]`; otherwise the
- * previously stored values are preserved (falling back to
- * [AvatarDefaults.DEFAULT_AVATAR_ID] for a brand new entry with no avatar
- * selection yet). Those two keys are stripped from the persisted `metadata`
- * map so they aren't duplicated with the top-level fields.
- */
 @InternalLeaderboardKitApi
 class DirectWriteScoreSubmitter(
     private val firestore: FirebaseFirestore,
@@ -42,29 +31,19 @@ class DirectWriteScoreSubmitter(
             val docRef = firestore.collection(pathStrategy.collectionPath(config)).document(userId)
             firestore.runTransaction { transaction ->
                 val existing = transaction.get(docRef)
-                val existingScore = (existing.get("score") as? Number)?.toLong()
-                val shouldWrite = existingScore == null || isBetter(score, existingScore, config)
+                val existingScore = (existing.get(EntryFields.SCORE) as? Number)?.toLong()
+                val shouldWrite = existingScore == null || ScoreSubmissionHelper.isBetter(score, existingScore, config)
                 if (shouldWrite) {
-                    val entry = LeaderboardEntry(
+                    val entry = ScoreSubmissionHelper.createSubmissionEntry(
                         userId = userId,
-                        displayName = metadata["displayName"] as? String
-                            ?: (existing.get("displayName") as? String).orEmpty(),
-                        avatarId = metadata["avatarId"] as? String
-                            ?: existing.get("avatarId") as? String
-                            ?: AvatarDefaults.DEFAULT_AVATAR_ID,
                         score = score,
-                        rank = null,
-                        metadata = metadata - "displayName" - "avatarId",
+                        metadata = metadata,
+                        existingDisplayName = existing.get(EntryFields.DISPLAY_NAME) as? String,
+                        existingAvatarId = existing.get(EntryFields.AVATAR_ID) as? String,
                     )
                     transaction.set(docRef, mapper.toDocument(entry))
                 }
             }.await()
         }
     }
-
-    private fun isBetter(candidate: Long, existing: Long, config: LeaderboardConfig): Boolean =
-        when (config.sortDirection) {
-            SortDirection.Descending -> candidate > existing
-            SortDirection.Ascending -> candidate < existing
-        }
 }
