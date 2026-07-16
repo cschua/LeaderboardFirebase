@@ -57,17 +57,25 @@ class LeaderboardClient internal constructor(
         }
 
     /**
-     * Submits [score] for the current user on [config]'s board. Deliberately a
-     * plain suspend function rather than something reachable only from inside
-     * [LeaderboardScreen]'s composition: score submission usually happens on a different
-     * screen than the leaderboard itself (e.g. a "run complete" handler), so it
-     * needs to be callable from a ViewModel/use case, not just a Compose callback.
+     * Submits [score] for a specific [userId] on [config]'s board. Use this for
+     * administrative overrides or test data seeding; for the common case of
+     * submitting the current player's score, use the single-argument overload.
+     */
+    suspend fun submitScore(
+        config: LeaderboardConfig,
+        userId: String,
+        score: Long,
+        metadata: Map<String, Any> = emptyMap(),
+    ): Result<Unit> = dependencies.submitScore(userId, score, config, metadata)
+
+    /**
+     * Submits [score] for the current user on [config]'s board.
      */
     suspend fun submitScore(
         config: LeaderboardConfig,
         score: Long,
         metadata: Map<String, Any> = emptyMap(),
-    ): Result<Unit> = dependencies.submitScore(this.config.currentUserId(), score, config, metadata)
+    ): Result<Unit> = submitScore(config, this.config.currentUserId(), score, metadata)
 
     /**
      * Time remaining until [config]'s time window next resets, anchored to that

@@ -2,11 +2,14 @@ package com.leaderboardkit.sample.ui
 
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import com.leaderboardkit.LeaderboardClient
 import com.leaderboardkit.domain.model.LeaderboardConfig
 import kotlinx.coroutines.launch
+import java.util.UUID
 
 /**
  * The "submit a random score" [DemoScaffold] FAB action shared by every demo
@@ -22,13 +25,29 @@ fun rememberSubmitRandomScoreAction(
     config: LeaderboardConfig,
     metadata: Map<String, Any>,
     snackbarHostState: SnackbarHostState,
+    asNewUser: Boolean = false,
 ): () -> Unit {
     val scope = rememberCoroutineScope()
-    return remember(client, config, metadata, snackbarHostState) {
+    // Local state to keep track of the "current" score for this session so clicking
+    // "Submit" always shows an improvement.
+    var sessionScore by remember { androidx.compose.runtime.mutableLongStateOf(0L) }
+
+    return remember(client, config, metadata, snackbarHostState, asNewUser) {
         {
             scope.launch {
-                client.submitScore(config, randomDemoScore(), metadata)
-                    .onFailure { snackbarHostState.showSnackbar(it.message ?: "Submission failed") }
+                val result = if (asNewUser) {
+                    val randomId = "test_" + UUID.randomUUID().toString().take(8)
+                    val randomName = listOf("Alex", "Jordan", "Casey", "Taylor", "Riley", "Quinn").random()
+                    val randomAvatar = "avatar_0${(1..9).random()}"
+                    val testMetadata = metadata + mapOf("displayName" to randomName, "avatarId" to randomAvatar)
+                    client.submitScore(config, randomId, randomDemoScore(), testMetadata)
+                } else {
+                    val nextScore = randomDemoScore(sessionScore)
+                    sessionScore = nextScore
+                    client.submitScore(config, nextScore, metadata)
+                }
+
+                result.onFailure { snackbarHostState.showSnackbar(it.message ?: "Submission failed") }
             }
         }
     }

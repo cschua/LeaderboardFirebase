@@ -15,6 +15,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import kotlin.random.Random
 
 /** Shared chrome for every demo screen: a back-enabled top bar, a snackbar host [onShowError] can feed, and an optional "submit a random score" FAB. */
@@ -25,6 +26,7 @@ fun DemoScaffold(
     onBack: () -> Unit,
     snackbarHostState: SnackbarHostState,
     onSubmitRandomScore: (() -> Unit)? = null,
+    onSeedBoard: (() -> Unit)? = null,
     content: @Composable (Modifier) -> Unit,
 ) {
     Scaffold(
@@ -40,8 +42,26 @@ fun DemoScaffold(
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
-            if (onSubmitRandomScore != null) {
-                ExtendedFloatingActionButton(onClick = onSubmitRandomScore, icon = { Icon(Icons.Filled.Add, contentDescription = null) }, text = { Text("Submit score") })
+            if (onSubmitRandomScore != null || onSeedBoard != null) {
+                androidx.compose.foundation.layout.Row(
+                    horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.padding(16.dp)
+                ) {
+                    onSeedBoard?.let {
+                        ExtendedFloatingActionButton(
+                            onClick = it,
+                            icon = { Icon(Icons.Filled.Add, contentDescription = null) },
+                            text = { Text("New User") }
+                        )
+                    }
+                    onSubmitRandomScore?.let {
+                        ExtendedFloatingActionButton(
+                            onClick = it,
+                            icon = { Icon(Icons.Filled.Add, contentDescription = null) },
+                            text = { Text("Submit") }
+                        )
+                    }
+                }
             }
         },
     ) { padding ->
@@ -50,4 +70,7 @@ fun DemoScaffold(
 }
 
 /** A plausible-looking random score for the demo's "submit score" FAB. */
-fun randomDemoScore(): Long = Random.nextLong(100, 10_000)
+fun randomDemoScore(current: Long? = null): Long {
+    val base = current ?: Random.nextLong(100, 1000)
+    return base + Random.nextLong(10, 500)
+}
