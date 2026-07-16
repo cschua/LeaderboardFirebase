@@ -10,8 +10,8 @@ object ScoreSubmissionHelper {
 
     fun isBetter(candidate: Long, existing: Long, config: LeaderboardConfig): Boolean =
         when (config.sortDirection) {
-            SortDirection.Descending -> candidate > existing
-            SortDirection.Ascending -> candidate < existing
+            SortDirection.Descending -> candidate >= existing
+            SortDirection.Ascending -> candidate <= existing
         }
 
     fun createSubmissionEntry(
