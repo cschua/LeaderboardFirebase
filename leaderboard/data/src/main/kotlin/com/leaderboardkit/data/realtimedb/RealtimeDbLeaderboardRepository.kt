@@ -117,8 +117,19 @@ class RealtimeDbLeaderboardRepository(
             override fun onDataChange(snapshot: DataSnapshot) {
                 val rawAscending = snapshot.children.toList()
                 val display = if (config.sortDirection == SortDirection.Descending) rawAscending.asReversed() else rawAscending
-                val ranked = assignRanks(toEntries(display), startRank = 1)
-                stateFor(config).loadedEntries = ranked
+                val entries = toEntries(display)
+                val ranked = assignRanks(entries, startRank = 1)
+
+                val state = stateFor(config)
+                state.update(
+                    newEntries = ranked,
+                    nextCursor = if (config.sortDirection == SortDirection.Descending) {
+                        rawAscending.firstOrNull()?.let { Cursor(scoreOf(it), it.key.orEmpty()) }
+                    } else {
+                        rawAscending.lastOrNull()?.let { Cursor(scoreOf(it), it.key.orEmpty()) }
+                    },
+                    isEnd = entries.size < config.pageSize
+                )
                 trySend(ranked)
             }
 
