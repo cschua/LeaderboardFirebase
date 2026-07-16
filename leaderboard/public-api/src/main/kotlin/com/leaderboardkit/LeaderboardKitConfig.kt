@@ -1,5 +1,6 @@
 package com.leaderboardkit
 
+import com.leaderboardkit.domain.model.LeaderboardBackend
 import com.leaderboardkit.domain.model.LeaderboardScope
 import com.leaderboardkit.ui.avatar.AvatarResolver
 import com.leaderboardkit.ui.avatar.DefaultAvatarResolver
@@ -10,6 +11,8 @@ import com.leaderboardkit.ui.theme.LeaderboardTheme
  * object most host apps construct by hand — everything below `:leaderboard:ui`
  * (repositories, mappers, the ViewModel) is wired up internally from it.
  *
+ * @param backend Which Firebase service to use — see [LeaderboardBackend].
+ *   Defaults to [LeaderboardBackend.Firestore].
  * @param firebaseAppName Name of an already-initialized secondary
  *   [com.google.firebase.FirebaseApp] to use (see `FirebaseApp.initializeApp(context, options, name)`),
  *   or `null` for the default app — this is the "Firebase app selection" knob:
@@ -33,6 +36,7 @@ import com.leaderboardkit.ui.theme.LeaderboardTheme
  */
 data class LeaderboardKitConfig(
     val currentUserId: () -> String,
+    val backend: LeaderboardBackend = LeaderboardBackend.Firestore,
     val firebaseAppName: String? = null,
     val defaultScope: LeaderboardScope = LeaderboardScope.Global,
     val defaultTheme: LeaderboardTheme? = null,

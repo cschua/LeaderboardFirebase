@@ -52,7 +52,7 @@ fun LeaderboardWidget(
     onSeeAllClick: (() -> Unit)? = null,
 ) {
     val viewModel: LeaderboardViewModel = viewModel(
-        key = config.boardId,
+        key = "widget_${config.boardId}_$currentUserId",
         factory = remember(config, currentUserId, dependencies) {
             LeaderboardViewModel.factory(config, currentUserId, dependencies)
         },

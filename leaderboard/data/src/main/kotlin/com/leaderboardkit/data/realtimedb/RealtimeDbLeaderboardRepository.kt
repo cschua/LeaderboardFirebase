@@ -23,7 +23,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withTimeout
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * [LeaderboardRepository] backed by Realtime Database, mirroring
@@ -51,6 +53,12 @@ class RealtimeDbLeaderboardRepository(
     private fun stateFor(config: LeaderboardConfig): BaseBoardState<Cursor> =
         boardStates.getOrPut(config.boardId) { BaseBoardState() }
 
+    private suspend fun <T> withNetworkTimeout(block: suspend () -> T): T = try {
+        withTimeout(10.seconds) { block() }
+    } catch (_: kotlinx.coroutines.TimeoutCancellationException) {
+        throw LeaderboardException.NetworkTimeout("Realtime Database request timed out. Make sure it's enabled in the Firebase console.")
+    }
+
     private fun baseQuery(config: LeaderboardConfig): Query =
         database.child(pathStrategy.nodePath(config)).orderByChild("score")
 
@@ -75,7 +83,7 @@ class RealtimeDbLeaderboardRepository(
                 q.limitToFirst(config.pageSize)
             }
         }
-        val snapshot = query.get().await()
+        val snapshot = withNetworkTimeout { query.get().await() }
         val rawAscending = snapshot.children.toList() // RTDB always iterates ascending by the orderBy field
         if (rawAscending.isEmpty()) return emptyList<LeaderboardEntry>() to null
 
@@ -149,7 +157,7 @@ class RealtimeDbLeaderboardRepository(
         metadata: Map<String, Any>,
     ): Result<Unit> = runCatching {
         val nodeRef = database.child(pathStrategy.nodePath(config)).child(userId)
-        val existing = nodeRef.get().await()
+        val existing = withNetworkTimeout { nodeRef.get().await() }
         val existingScore = (existing.child(EntryFields.SCORE).value as? Number)?.toLong()
         val shouldWrite = existingScore == null || ScoreSubmissionHelper.isBetter(score, existingScore, config)
         if (shouldWrite) {
@@ -160,13 +168,13 @@ class RealtimeDbLeaderboardRepository(
                 existingDisplayName = existing.child(EntryFields.DISPLAY_NAME).value as? String,
                 existingAvatarId = existing.child(EntryFields.AVATAR_ID).value as? String,
             )
-            nodeRef.setValue(mapper.toNode(entry)).await()
+            withNetworkTimeout { nodeRef.setValue(mapper.toNode(entry)).await() }
         }
     }
 
     /** Fetches the full ordered entry set. Only safe for boards small enough for client-side ranking — see class KDoc. */
     private suspend fun fetchAllOrderedAscending(config: LeaderboardConfig): List<DataSnapshot> =
-        baseQuery(config).get().await().children.toList()
+        withNetworkTimeout { baseQuery(config).get().await() }.children.toList()
 
     override suspend fun getUserRank(userId: String, config: LeaderboardConfig): Result<Int?> = runCatching {
         val all = fetchAllOrderedAscending(config)

@@ -15,4 +15,7 @@ sealed class LeaderboardException(message: String) : Exception(message) {
     /** The requested user has no entry on this board. */
     class UserNotFound(val userId: String) :
         LeaderboardException("No leaderboard entry for user $userId")
+
+    /** The backend request timed out. */
+    class NetworkTimeout(message: String = "Request timed out") : LeaderboardException(message)
 }

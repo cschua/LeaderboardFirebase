@@ -8,4 +8,5 @@ sealed interface Destination {
     data object MonthlyBoard : Destination
     data object CustomTheme : Destination
     data object CustomRow : Destination
+    data object RealtimeDb : Destination
 }

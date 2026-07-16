@@ -8,6 +8,8 @@ import com.leaderboardkit.domain.annotations.InternalLeaderboardKitApi
 import com.leaderboardkit.domain.model.LeaderboardConfig
 import com.leaderboardkit.domain.model.LeaderboardException
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withTimeout
+import kotlin.time.Duration.Companion.seconds
 
 @InternalLeaderboardKitApi
 class DirectWriteScoreSubmitter(
@@ -29,21 +31,23 @@ class DirectWriteScoreSubmitter(
 
         return runCatching {
             val docRef = firestore.collection(pathStrategy.collectionPath(config)).document(userId)
-            firestore.runTransaction { transaction ->
-                val existing = transaction.get(docRef)
-                val existingScore = (existing.get(EntryFields.SCORE) as? Number)?.toLong()
-                val shouldWrite = existingScore == null || ScoreSubmissionHelper.isBetter(score, existingScore, config)
-                if (shouldWrite) {
-                    val entry = ScoreSubmissionHelper.createSubmissionEntry(
-                        userId = userId,
-                        score = score,
-                        metadata = metadata,
-                        existingDisplayName = existing.get(EntryFields.DISPLAY_NAME) as? String,
-                        existingAvatarId = existing.get(EntryFields.AVATAR_ID) as? String,
-                    )
-                    transaction.set(docRef, mapper.toDocument(entry))
-                }
-            }.await()
+            withTimeout(10.seconds) {
+                firestore.runTransaction { transaction ->
+                    val existing = transaction.get(docRef)
+                    val existingScore = (existing.get(EntryFields.SCORE) as? Number)?.toLong()
+                    val shouldWrite = existingScore == null || ScoreSubmissionHelper.isBetter(score, existingScore, config)
+                    if (shouldWrite) {
+                        val entry = ScoreSubmissionHelper.createSubmissionEntry(
+                            userId = userId,
+                            score = score,
+                            metadata = metadata,
+                            existingDisplayName = existing.get(EntryFields.DISPLAY_NAME) as? String,
+                            existingAvatarId = existing.get(EntryFields.AVATAR_ID) as? String,
+                        )
+                        transaction.set(docRef, mapper.toDocument(entry))
+                    }
+                }.await()
+            }
         }
     }
 }

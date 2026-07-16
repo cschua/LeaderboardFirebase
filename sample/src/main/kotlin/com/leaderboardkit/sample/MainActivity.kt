@@ -18,6 +18,7 @@ import com.leaderboardkit.sample.demo.CustomThemeBoardDemo
 import com.leaderboardkit.sample.demo.FriendsBoardDemo
 import com.leaderboardkit.sample.demo.GlobalBoardDemo
 import com.leaderboardkit.sample.demo.MonthlyBoardDemo
+import com.leaderboardkit.sample.demo.RealtimeDbBoardDemo
 import com.leaderboardkit.sample.demo.WeeklyBoardDemo
 import com.leaderboardkit.sample.ui.HomeScreen
 
@@ -44,6 +45,7 @@ class MainActivity : ComponentActivity() {
                             Destination.MonthlyBoard -> MonthlyBoardDemo(onBack = { destination = Destination.Home })
                             Destination.CustomTheme -> CustomThemeBoardDemo(onBack = { destination = Destination.Home })
                             Destination.CustomRow -> CustomRowBoardDemo(onBack = { destination = Destination.Home })
+                            Destination.RealtimeDb -> RealtimeDbBoardDemo(onBack = { destination = Destination.Home })
                         }
                     }
                 }

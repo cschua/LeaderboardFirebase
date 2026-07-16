@@ -4,6 +4,7 @@ package com.leaderboardkit
 
 import android.content.Context
 import com.google.firebase.FirebaseApp
+import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.firestore.FirebaseFirestore
 import com.leaderboardkit.data.common.formatCountdown
 import com.leaderboardkit.data.common.timeUntilNextReset
@@ -12,7 +13,11 @@ import com.leaderboardkit.data.firestore.DirectWriteScoreSubmitter
 import com.leaderboardkit.data.firestore.FirestoreLeaderboardEntryMapper
 import com.leaderboardkit.data.firestore.FirestoreLeaderboardRepository
 import com.leaderboardkit.data.ratelimit.ClientRateLimiter
+import com.leaderboardkit.data.realtimedb.DefaultRealtimeDbPathStrategy
+import com.leaderboardkit.data.realtimedb.RealtimeDbLeaderboardEntryMapper
+import com.leaderboardkit.data.realtimedb.RealtimeDbLeaderboardRepository
 import com.leaderboardkit.domain.annotations.InternalLeaderboardKitApi
+import com.leaderboardkit.domain.model.LeaderboardBackend
 import com.leaderboardkit.domain.model.LeaderboardConfig
 import com.leaderboardkit.domain.model.LeaderboardConfigBuilder
 import com.leaderboardkit.domain.model.leaderboardConfig
@@ -81,21 +86,32 @@ fun formatResetCountdown(duration: Duration): String = formatCountdown(duration)
 /**
  * Builds a [LeaderboardClient] for [config] — selects the Firebase app
  * (default, unless [LeaderboardKitConfig.firebaseAppName] names a secondary
- * one), constructs the direct-write Firestore repository, and wires the four
- * use cases behind it. Replaces the old `LeaderboardKit.initialize`; call once
- * (typically `Application.onCreate()`) and hold onto the result — usually to
- * hand to [ProvideLeaderboardClient] further down the composition.
+ * one), constructs the appropriate repository (Firestore or Realtime Database),
+ * and wires the four use cases behind it. Replaces the old
+ * `LeaderboardKit.initialize`; call once (typically `Application.onCreate()`)
+ * and hold onto the result — usually to hand to [ProvideLeaderboardClient]
+ * further down the composition.
  */
 fun createLeaderboardClient(context: Context, config: LeaderboardKitConfig): LeaderboardClient {
     FirebaseApp.initializeApp(context.applicationContext)
     val firebaseApp = config.firebaseAppName?.let { FirebaseApp.getInstance(it) } ?: FirebaseApp.getInstance()
-    val firestore = FirebaseFirestore.getInstance(firebaseApp)
 
-    val pathStrategy = DefaultFirestorePathStrategy()
-    val mapper = FirestoreLeaderboardEntryMapper()
-    val rateLimiter = ClientRateLimiter(minInterval = 1.seconds)
-    val scoreSubmitter = DirectWriteScoreSubmitter(firestore, pathStrategy, mapper, rateLimiter)
-    val repository: LeaderboardRepository = FirestoreLeaderboardRepository(firestore, pathStrategy, mapper, scoreSubmitter)
+    val repository: LeaderboardRepository = when (config.backend) {
+        LeaderboardBackend.Firestore -> {
+            val firestore = FirebaseFirestore.getInstance(firebaseApp)
+            val pathStrategy = DefaultFirestorePathStrategy()
+            val mapper = FirestoreLeaderboardEntryMapper()
+            val rateLimiter = ClientRateLimiter(minInterval = 1.seconds)
+            val scoreSubmitter = DirectWriteScoreSubmitter(firestore, pathStrategy, mapper, rateLimiter)
+            FirestoreLeaderboardRepository(firestore, pathStrategy, mapper, scoreSubmitter)
+        }
+        LeaderboardBackend.RealtimeDatabase -> {
+            val database = FirebaseDatabase.getInstance(firebaseApp).reference
+            val pathStrategy = DefaultRealtimeDbPathStrategy()
+            val mapper = RealtimeDbLeaderboardEntryMapper()
+            RealtimeDbLeaderboardRepository(database, pathStrategy, mapper)
+        }
+    }
 
     val dependencies = LeaderboardDependencies(
         observeLeaderboard = ObserveLeaderboardUseCase(repository),

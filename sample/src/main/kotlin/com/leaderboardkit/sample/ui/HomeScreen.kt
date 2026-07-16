@@ -86,6 +86,12 @@ private val demos = listOf(
         destination = Destination.CustomRow,
         icon = Icons.AutoMirrored.Filled.List,
     ),
+    DemoEntry(
+        title = "Realtime Database backend",
+        subtitle = "Configured to use Firebase Realtime DB instead of Firestore",
+        destination = Destination.RealtimeDb,
+        icon = Icons.Filled.Refresh,
+    ),
 )
 
 @OptIn(ExperimentalMaterial3Api::class)

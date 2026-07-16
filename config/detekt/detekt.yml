@@ -48,6 +48,7 @@ complexity:
   TooManyFunctions:
     active: true
     thresholdInFiles: 40
+    thresholdInClasses: 15
   LongParameterList:
     active: true
     # Ignore @Composable functions as they often have many parameters

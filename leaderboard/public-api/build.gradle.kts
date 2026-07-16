@@ -58,6 +58,7 @@ dependencies {
 
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.firestore)
+    implementation(libs.firebase.database)
     implementation(libs.kotlinx.coroutines.android)
 
     testImplementation(project(":leaderboard:data"))

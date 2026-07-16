@@ -17,13 +17,16 @@ import com.leaderboardkit.domain.model.RefreshStrategy
 import com.leaderboardkit.domain.model.SortDirection
 import com.leaderboardkit.domain.model.TieBreak
 import com.leaderboardkit.domain.repository.LeaderboardRepository
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withTimeout
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * [LeaderboardRepository] backed by Firestore. See [ScoreSubmitter] for the two
@@ -66,6 +69,12 @@ class FirestoreLeaderboardRepository(
     private fun stateFor(config: LeaderboardConfig): BaseBoardState<DocumentSnapshot> =
         boardStates.getOrPut(boardKey(config)) { BaseBoardState() }
 
+    private suspend fun <T> withNetworkTimeout(block: suspend () -> T): T = try {
+        withTimeout(10.seconds) { block() }
+    } catch (_: TimeoutCancellationException) {
+        throw LeaderboardException.NetworkTimeout("Firestore request timed out. Check your connection or Firebase console.")
+    }
+
     private fun boardKey(config: LeaderboardConfig): String = config.boardId
 
     private fun baseQuery(config: LeaderboardConfig): Query {
@@ -89,7 +98,7 @@ class FirestoreLeaderboardRepository(
     }
 
     private suspend fun fetchFirstPage(config: LeaderboardConfig, source: Source = Source.DEFAULT): List<LeaderboardEntry> {
-        val snapshot = baseQuery(config).limit(config.pageSize.toLong()).get(source).await()
+        val snapshot = withNetworkTimeout { baseQuery(config).limit(config.pageSize.toLong()).get(source).await() }
         val entries = assignRanks(snapshot.documents.map { mapper.fromDocument(it.id, it.data.orEmpty()) }, startRank = 1)
         val state = stateFor(config)
         state.update(
@@ -146,7 +155,7 @@ class FirestoreLeaderboardRepository(
             val query = baseQuery(config).limit(config.pageSize.toLong()).let {
                 if (cursor != null) it.startAfter(cursor) else it
             }
-            val snapshot = query.get().await()
+            val snapshot = withNetworkTimeout { query.get().await() }
             if (snapshot.documents.isEmpty()) {
                 state.endReached = true
                 return@withLock false
@@ -177,11 +186,11 @@ class FirestoreLeaderboardRepository(
             SortDirection.Descending -> baseQuery(config).whereGreaterThan("score", score)
             SortDirection.Ascending -> baseQuery(config).whereLessThan("score", score)
         }
-        return betterQuery.count().get(AggregateSource.SERVER).await().count
+        return withNetworkTimeout { betterQuery.count().get(AggregateSource.SERVER).await().count }
     }
 
     override suspend fun getUserRank(userId: String, config: LeaderboardConfig): Result<Int?> = runCatching {
-        val userDoc = firestore.collection(pathStrategy.collectionPath(config)).document(userId).get().await()
+        val userDoc = withNetworkTimeout { firestore.collection(pathStrategy.collectionPath(config)).document(userId).get().await() }
         if (!userDoc.exists()) return@runCatching null
         val userScore = (userDoc.get("score") as? Number)?.toLong() ?: return@runCatching null
         (countBetter(config, userScore) + 1).toInt()
@@ -193,11 +202,11 @@ class FirestoreLeaderboardRepository(
         config: LeaderboardConfig,
     ): Result<List<LeaderboardEntry>> = runCatching {
         val collection = firestore.collection(pathStrategy.collectionPath(config))
-        val anchorDoc = collection.document(userId).get().await()
+        val anchorDoc = withNetworkTimeout { collection.document(userId).get().await() }
         if (!anchorDoc.exists()) throw LeaderboardException.UserNotFound(userId)
         val anchorScore = (anchorDoc.get("score") as? Number)?.toLong()
             ?: return@runCatching emptyList()
-        val anchorRank = (countBetter(config, anchorScore) + 1).toInt()
+        val anchorRank = (withNetworkTimeout { countBetter(config, anchorScore) } + 1).toInt()
         val anchorEntry = mapper.fromDocument(anchorDoc.id, anchorDoc.data.orEmpty()).copy(rank = anchorRank)
 
         val (betterOp, worseOp) = when (config.sortDirection) {
@@ -205,33 +214,37 @@ class FirestoreLeaderboardRepository(
             SortDirection.Ascending -> Query.Direction.DESCENDING to Query.Direction.ASCENDING
         }
 
-        val aboveSnapshot = collection
-            .let {
-                if (config.sortDirection == SortDirection.Descending) {
-                    it.whereGreaterThan("score", anchorScore)
-                } else {
-                    it.whereLessThan("score", anchorScore)
+        val aboveSnapshot = withNetworkTimeout {
+            collection
+                .let {
+                    if (config.sortDirection == SortDirection.Descending) {
+                        it.whereGreaterThan("score", anchorScore)
+                    } else {
+                        it.whereLessThan("score", anchorScore)
+                    }
                 }
-            }
-            .orderBy("score", betterOp)
-            .limit(radius.toLong())
-            .get().await()
+                .orderBy("score", betterOp)
+                .limit(radius.toLong())
+                .get().await()
+        }
         val above = assignRanks(
             aboveSnapshot.documents.map { mapper.fromDocument(it.id, it.data.orEmpty()) }.asReversed(),
             startRank = aboveWindowStartRank(anchorRank, aboveSnapshot.documents.size),
         )
 
-        val belowSnapshot = collection
-            .let {
-                if (config.sortDirection == SortDirection.Descending) {
-                    it.whereLessThan("score", anchorScore)
-                } else {
-                    it.whereGreaterThan("score", anchorScore)
+        val belowSnapshot = withNetworkTimeout {
+            collection
+                .let {
+                    if (config.sortDirection == SortDirection.Descending) {
+                        it.whereLessThan("score", anchorScore)
+                    } else {
+                        it.whereGreaterThan("score", anchorScore)
+                    }
                 }
-            }
-            .orderBy("score", worseOp)
-            .limit(radius.toLong())
-            .get().await()
+                .orderBy("score", worseOp)
+                .limit(radius.toLong())
+                .get().await()
+        }
         val below = assignRanks(
             belowSnapshot.documents.map { mapper.fromDocument(it.id, it.data.orEmpty()) },
             startRank = anchorRank + 1,
